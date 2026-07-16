@@ -29,13 +29,20 @@ jobs:
       - name: Install dependencies
         run: npm install 2>&1
 
-      - name: Check config
-        run: cat next.config.mjs
-
       - name: Build with Next.js
         run: |
           set -o pipefail
-          npm run build 2>&1 | tee build.log || (echo "=== BUILD FAILED ==="; cat build.log; exit 1)
+          npm run build 2>&1 | tee build.log
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== BUILD LOG ==="
+          cat build.log
+          echo "=== PACKAGE.JSON ==="
+          cat package.json
+          echo "=== NEXT CONFIG ==="
+          cat next.config.mjs
 
       - name: Verify output
         run: |
