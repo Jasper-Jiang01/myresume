@@ -1,3 +1,5 @@
+import { withBasePath } from "@/lib/paths";
+
 type BulletItemProps = {
   label: string;
 };
@@ -7,7 +9,7 @@ export function BulletItem({ label }: BulletItemProps) {
     <div className="flex items-center gap-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/list-dot.svg"
+        src={withBasePath("/images/list-dot.svg")}
         alt=""
         width={14}
         height={14}

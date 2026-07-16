@@ -9,6 +9,8 @@
  *  - labelClassName: string，标签类名
  */
 
+import { withBasePath } from "@/lib/paths";
+
 type InfoChipProps = {
   icon?: string;
   /** 图标边长（px），默认 14 */
@@ -28,7 +30,7 @@ export function InfoChip({
       <div className="flex items-center gap-1">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={icon}
+          src={withBasePath(icon)}
           alt=""
           width={iconSize}
           height={iconSize}

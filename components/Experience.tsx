@@ -8,11 +8,16 @@
  */
 
 import { experience } from "@/lib/content";
+import { withBasePath } from "@/lib/paths";
 import { SectionCard } from "./shared/SectionCard";
 
 export function Experience() {
   return (
-    <SectionCard title={experience.title} icon="/assets/section-about.svg"  iconImageSize={18}>
+    <SectionCard
+      title={experience.title}
+      icon="/assets/section-about.svg"
+      iconImageSize={18}
+    >
       <ul className="flex w-full flex-col gap-3">
         {experience.items.map((item) => (
           <li
@@ -22,15 +27,13 @@ export function Experience() {
             <div className="flex min-w-0 items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/list-dot.svg"
+                src={withBasePath("/images/list-dot.svg")}
                 alt=""
                 width={14}
                 height={14}
                 className="size-dot-md shrink-0"
               />
-              <span className="text-body text-muted">
-                {item.role}
-              </span>
+              <span className="text-body text-muted">{item.role}</span>
             </div>
             <span className="shrink-0 pl-5 text-body text-muted sm:pl-0">
               {item.period}

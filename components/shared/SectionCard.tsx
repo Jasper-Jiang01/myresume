@@ -11,6 +11,7 @@
  */
 
 import type { ReactNode } from "react";
+import { withBasePath } from "@/lib/paths";
 
 type SectionCardProps = {
   children: ReactNode;
@@ -46,7 +47,7 @@ export function SectionCard({
           {icon ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={icon}
+              src={withBasePath(icon)}
               alt=""
               width={iconImageSize}
               height={iconImageSize}
