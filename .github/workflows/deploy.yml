@@ -25,17 +25,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm install 2>&1
+
+      - name: Check config
+        run: cat next.config.mjs
 
       - name: Build with Next.js
         run: |
-          echo "Starting build..."
-          npm run build 2>&1 || (echo "BUILD FAILED"; exit 1)
-          echo "Build finished. Listing output directory:"
-          ls -la ./dist 2>/dev/null || ls -la ./out 2>/dev/null || echo "No output directory found"
+          set -o pipefail
+          npm run build 2>&1 | tee build.log || (echo "=== BUILD FAILED ==="; cat build.log; exit 1)
+
+      - name: Verify output
+        run: |
+          ls -la
+          ls -la ./dist 2>/dev/null || ls -la ./out 2>/dev/null || echo "No output dir"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
