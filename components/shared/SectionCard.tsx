@@ -38,7 +38,7 @@ export function SectionCard({
 
   return (
     <section
-      className={`flex h-full min-h-0 flex-col rounded-card border-card border-cardBorder bg-[#f5f5f5]/70 p-6 backdrop-blur-sm ${className}`}
+      className={`flex h-full min-h-0 flex-col rounded-card border border-[#DDDDDD] bg-[#f5f5f5]/70 p-6 backdrop-blur-sm ${className}`}
     >
       <div className="mb-4 flex flex-col gap-2">
         <div
