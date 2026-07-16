@@ -24,14 +24,18 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build with Next.js
-        run: npm run build
+        run: |
+          echo "Starting build..."
+          npm run build 2>&1 || (echo "BUILD FAILED"; exit 1)
+          echo "Build finished. Listing output directory:"
+          ls -la ./dist 2>/dev/null || ls -la ./out 2>/dev/null || echo "No output directory found"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
