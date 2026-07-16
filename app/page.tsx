@@ -8,7 +8,7 @@ import { Tools } from "@/components/Tools";
 export default function Home() {
   return (
     /* mx-auto my-16 px-8 max-w-[864px] + gap-3 网格 */
-    <main className="relative min-h-screen px-8 py-16">
+    <main className="relative z-10 min-h-screen px-8 py-16">
       <div className="mx-auto flex w-full max-w-content flex-col gap-3">
         <ProfileHeader />
 

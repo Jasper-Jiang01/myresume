@@ -12,7 +12,7 @@ export function SiteBackground() {
     <>
       {/* 纸质纹理：absolute 覆盖整个 body，随内容高度伸展 */}
       <div
-        className="pointer-events-none absolute inset-0 z-10 overflow-hidden opacity-40 grayscale mix-blend-multiply"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-40 grayscale mix-blend-multiply"
         aria-hidden
       >
         <img
