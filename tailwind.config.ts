@@ -52,8 +52,8 @@ const config: Config = {
         content: "864px",
       },
       size: {
-        avatar: "5rem", // 80px
-        "avatar-sm": "7rem", // 112px — sm: 布局档位
+        avatar: "7.5rem", // 120px
+        "avatar-sm": "7.5rem", // 120px
         icon: "2rem", // 32px
         "icon-lg": "2rem",
         "dot-sm": "1rem", // 16px
