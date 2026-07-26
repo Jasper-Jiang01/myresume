@@ -1,9 +1,9 @@
 import type { Config } from "tailwindcss";
 
 /**
- * 尺寸对齐 Aragakey（https://jiangyijie27.github.io/aragakey/）：
- * - fontSize: 仅 text-xs(0.75rem) / text-base(1rem)
- * - 内容宽 ~864px；卡片 p-6、网格 gap-3
+ * Web 适配 token：
+ * - 字号/布局：skills/web-fontsize-adaptation.md
+ * - 字体栈：skills/web-font-family.md（系统 UI，西文→中文）
  */
 const config: Config = {
   content: [
@@ -25,41 +25,48 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "var(--font-inter)",
-          "Inter",
-          "PingFang SC",
-          "Hiragino Sans GB",
-          "Microsoft YaHei",
           "system-ui",
           "-apple-system",
+          "BlinkMacSystemFont",
+          '"Segoe UI"',
+          "Roboto",
+          "Ubuntu",
+          '"Helvetica Neue"',
+          "Helvetica",
+          "Arial",
+          '"PingFang SC"',
+          '"Hiragino Sans GB"',
+          '"Microsoft YaHei UI"',
+          '"Microsoft YaHei"',
+          '"Source Han Sans CN"',
           "sans-serif",
         ],
       },
       fontSize: {
-        // 固定字号，不做 sm:/md: 断点适配
-        body: ["0.75rem", { lineHeight: "1rem" }],
-        section: ["1rem", { lineHeight: "1.5rem" }],
-        title: ["1.2rem", { lineHeight: "1.6rem" }], // 18.2px — 原 16px +2
+        // 语义字号：默认固定；仅关键文案可用 sm: 升一档
+        body: ["0.75rem", { lineHeight: "1rem" }], // 12px — 正文 / meta
+        title: ["1rem", { lineHeight: "1.5rem" }], // 16px — 区块标题
+        display: ["1.25rem", { lineHeight: "1.75rem" }], // 20px — 姓名等强调
       },
       maxWidth: {
-        content: "54rem", // 864px — 与 Aragakey max-w-[864px] 一致
+        content: "864px",
       },
       size: {
-        avatar: "5rem", // 80px — 对齐 Aragakey w-20
-        "avatar-sm": "7rem", // 112px — 对齐 Aragakey sm:w-28
-        icon: "2rem", // 32px — 对齐 Aragakey w-8
+        avatar: "5rem", // 80px
+        "avatar-sm": "7rem", // 112px — sm: 布局档位
+        icon: "2rem", // 32px
         "icon-lg": "2rem",
-        "dot-sm": "1rem", // 12px
+        "dot-sm": "1rem", // 16px
         "dot-md": "0.875rem", // 14px
       },
       borderRadius: {
-        card: "0.375rem", // 6px — Aragakey rounded-md
+        card: "0.375rem", // 6px
         chip: "0.375rem",
-        icon: "0.5rem", // 8px — Aragakey rounded-lg
+        icon: "0.5rem", // 8px
         "icon-lg": "0.5rem",
       },
       borderWidth: {
-        card: "0.0425rem", // 0.75px
+        card: "0.75px",
       },
     },
   },

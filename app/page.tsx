@@ -7,12 +7,12 @@ import { Tools } from "@/components/Tools";
 
 export default function Home() {
   return (
-    /* mx-auto my-16 px-8 max-w-[864px] + gap-3 网格 */
+    /* 布局适配：固定内容宽 + sm: 网格重排；字号不随根缩放 */
     <main className="relative z-10 min-h-screen px-8 py-16">
       <div className="mx-auto flex w-full max-w-content flex-col gap-3">
         <ProfileHeader />
 
-        {/* 默认单列；sm: 多列；gap-3 对齐 Aragakey grid gap-3 */}
+        {/* 默认单列；sm: 多列（字号与布局解耦） */}
         <div className="grid w-full grid-cols-12 gap-3">
           <div className="col-span-12">
             <AboutMe />

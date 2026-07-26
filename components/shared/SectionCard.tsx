@@ -56,7 +56,7 @@ export function SectionCard({
             />
           ) : null}
         </div>
-        <h2 className="text-section font-medium text-black">{title}</h2>
+        <h2 className="text-title font-medium text-black">{title}</h2>
       </div>
       {children}
     </section>

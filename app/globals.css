@@ -12,16 +12,19 @@
   --text-muted: #737373;
   --text-black: #000000;
   --icon-placeholder: #f7f7f7;
+  /* 系统 UI 字体栈：西文 → 中文 → sans-serif（skills/web-font-family.md） */
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+    "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans CN", sans-serif;
 }
 
 /*
- * 对齐 Aragakey：标准浏览器 16px rem 根字号
- * https://jiangyijie27.github.io/aragakey/
- * 不靠放大根字号撑布局，用 Tailwind 默认 rem 阶梯控制密度
+ * Web 适配：根字号锚定，禁止用 @media / clamp 修改 html font-size
+ * 字号走 rem token；布局用 sm: 断点重排（见 skills/web-fontsize-adaptation.md）
  */
-/* 根字号用 px 锚定；其余字体尺寸一律用 rem */
 html {
-  font-size: 16px; /* 1rem = 16px */
+  font-size: 16px; /* 1rem = 16px，全站基准 */
 }
 
 html,
@@ -32,15 +35,9 @@ body {
 body {
   background: transparent;
   color: var(--text-primary);
-  font-family:
-    var(--font-inter),
-    Inter,
-    "PingFang SC",
-    "Hiragino Sans GB",
-    "Microsoft YaHei",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
 }

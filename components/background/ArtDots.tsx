@@ -128,7 +128,7 @@ export default function ArtDots() {
   return (
     <div
       ref={elRef}
-      className="pointer-events-none fixed inset-0 z-[-1] h-[100dvh] w-screen"
+      className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-screen"
       aria-hidden
     />
   );

@@ -27,8 +27,9 @@ export function ProfileHeader() {
       </div>
 
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-[20px] font-bold ">{profile.name}</h1>
-        <p className="text-[18px] font-medium ">{profile.title}</p>
+        {/* 关键姓名：小屏 title，sm 升一档 display */}
+        <h1 className="text-body font-bold sm:text-display">{profile.name}</h1>
+        <p className="text-body font-medium sm:text-title">{profile.title}</p>
       </div>
 
       <div className="-mt-0.5 flex flex-wrap items-center gap-2 sm:gap-3">
