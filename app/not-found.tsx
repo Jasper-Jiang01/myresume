@@ -7,9 +7,9 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-8 py-16">
-      <div className="flex flex-col items-center gap-6 text-center">
-        <span className="text-6xl font-bold text-primary">404</span>
+    <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-16">
+      <div className="flex flex-col items-center gap-4 text-center sm:gap-6">
+        <span className="text-5xl font-bold text-primary sm:text-6xl">404</span>
         <h1 className="text-title font-medium text-primary">
           页面不存在
         </h1>

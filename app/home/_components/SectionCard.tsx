@@ -10,6 +10,7 @@
  *  - title: string，卡片标题
  */
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { withBasePath } from "@/lib/paths";
 
@@ -38,15 +39,14 @@ export function SectionCard({
 
   return (
     <section
-      className={`flex h-full min-h-0 flex-col rounded-card border border-[#DDDDDD] bg-[#f5f5f5]/70 p-6 backdrop-blur-sm ${className}`}
+      className={`flex h-full min-h-0 flex-col rounded-card border border-[#DDDDDD] bg-[#f5f5f5]/70 p-4 backdrop-blur-sm sm:p-6 ${className}`}
     >
       <div className="mb-4 flex flex-col gap-2">
         <div
           className={`flex items-center justify-center border border-solid border-cardBorder bg-white shadow-sm ${frameClass}`}
         >
           {icon ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={withBasePath(icon)}
               alt=""
               width={iconImageSize}

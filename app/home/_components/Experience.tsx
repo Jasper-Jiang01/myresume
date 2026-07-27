@@ -7,6 +7,7 @@
  *  - items: { role: string, period: string }[]，工作经历
  */
 
+import Image from "next/image";
 import { experience } from "@/lib/content";
 import { withBasePath } from "@/lib/paths";
 import { SectionCard } from "./SectionCard";
@@ -25,8 +26,7 @@ export function Experience() {
             className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
           >
             <div className="flex min-w-0 items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={withBasePath("/images/list-dot.svg")}
                 alt=""
                 width={14}

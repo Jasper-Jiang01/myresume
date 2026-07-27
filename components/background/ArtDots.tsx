@@ -110,15 +110,21 @@ export default function ArtDots() {
       addPoints();
     };
 
+    let scrollRaf = 0;
     const handleScroll = () => {
-      offsetYRef.current = window.scrollY;
-      addPoints();
+      if (scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0;
+        offsetYRef.current = window.scrollY;
+        addPoints();
+      });
     };
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
       unmount();

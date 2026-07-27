@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import dynamic from "next/dynamic";
 
 const ArtDots = dynamic(() => import("./ArtDots"), { ssr: false });
@@ -15,10 +16,12 @@ export function SiteBackground() {
         className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-40 grayscale mix-blend-multiply"
         aria-hidden
       >
-        <img
+        <Image
           src={HERO_BG_URL}
           alt=""
-          className="absolute inset-0 h-full w-full scale-x-[2] object-cover"
+          fill
+          className="scale-x-[2] object-cover"
+          unoptimized
         />
       </div>
 

@@ -11,7 +11,7 @@ import { Tools } from "./_components/Tools";
 export default function Home() {
   return (
     /* 布局适配：固定内容宽 + sm: 网格重排；字号不随根缩放 */
-    <main className="relative z-10 min-h-screen px-8 py-16">
+    <main className="relative z-10 min-h-screen px-4 py-8 sm:px-8 sm:py-16">
       <div className="mx-auto flex w-full max-w-content flex-col gap-3">
         <ProfileHeader />
 

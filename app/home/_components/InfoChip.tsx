@@ -9,6 +9,7 @@
  *  - labelClassName: string，标签类名
  */
 
+import Image from "next/image";
 import { withBasePath } from "@/lib/paths";
 
 type InfoChipProps = {
@@ -28,8 +29,7 @@ export function InfoChip({
   return (
     <div className="inline-flex items-center justify-center rounded-chip border border-[#DDDDDD] bg-[#F5F5F5] px-2.5 py-2 shadow-none backdrop-blur-sm">
       <div className="flex items-center gap-1">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={withBasePath(icon)}
           alt=""
           width={iconSize}
