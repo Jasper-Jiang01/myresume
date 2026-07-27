@@ -8,8 +8,8 @@
  */
 
 import { tools } from "@/lib/content";
-import { BulletItem } from "./shared/BulletItem";
-import { SectionCard } from "./shared/SectionCard";
+import { BulletItem } from "./BulletItem";
+import { SectionCard } from "./SectionCard";
 
 /** Figma: Tools */
 export function Tools() {

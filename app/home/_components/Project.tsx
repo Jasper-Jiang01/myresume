@@ -7,8 +7,8 @@
  *  - items: string[]，作品
  */
 import { project } from "@/lib/content";
-import { BulletItem } from "./shared/BulletItem";
-import { SectionCard } from "./shared/SectionCard";
+import { BulletItem } from "./BulletItem";
+import { SectionCard } from "./SectionCard";
 
 export function Project() {
   return (

@@ -9,7 +9,7 @@
 
 import { experience } from "@/lib/content";
 import { withBasePath } from "@/lib/paths";
-import { SectionCard } from "./shared/SectionCard";
+import { SectionCard } from "./SectionCard";
 
 export function Experience() {
   return (

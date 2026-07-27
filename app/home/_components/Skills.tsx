@@ -8,7 +8,7 @@
  */
 
 import { skills } from "@/lib/content";
-import { SectionCard } from "./shared/SectionCard";
+import { SectionCard } from "./SectionCard";
 
 /** Figma: Skills */
 export function Skills() {

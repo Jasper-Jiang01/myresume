@@ -1,4 +1,4 @@
-import { InfoChip } from "./shared/InfoChip";
+import { InfoChip } from "./InfoChip";
 import { profile } from "@/lib/content";
 import { withBasePath } from "@/lib/paths";
 

@@ -9,7 +9,7 @@
  *  - passions: string，兴趣爱好
  */
 import { aboutMe } from "@/lib/content";
-import { SectionCard } from "./shared/SectionCard";
+import { SectionCard } from "./SectionCard";
 
 export function AboutMe() {
   return (
