@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import projects from "../_content/projects";
+import { withBasePath } from "@/lib/paths";
 
 export function generateStaticParams() {
   return Object.keys(projects).map((slug) => ({ slug }));
@@ -69,7 +70,7 @@ export default function ProjectDetail({
       {/* iframe 全屏展示项目 */}
       <div className="relative flex-1 overflow-hidden">
         <iframe
-          src={`/cssdoodle/${slug}/index.html`}
+          src={withBasePath(`/cssdoodle/${slug}/index.html`)}
           title={project.title}
           className="absolute inset-0 h-full w-full border-0"
           sandbox="allow-scripts allow-same-origin allow-popups"

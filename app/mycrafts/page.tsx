@@ -2,6 +2,7 @@ import { ProjectCard } from "./_components/ProjectCard";
 import { SiteFooter } from "./_components/SiteFooter";
 import { SiteHeader } from "./_components/SiteHeader";
 import projects from "./_content/projects";
+import { withBasePath } from "@/lib/paths";
 import Link from "next/link";
 
 /**
@@ -24,7 +25,7 @@ export default function MyCrafts() {
             <ProjectCard
               title={project.title}
               category={project.category}
-              previewSrc={`/cssdoodle/${slug}/index.html`}
+              previewSrc={withBasePath(`/cssdoodle/${slug}/index.html`)}
               previewConfig={project.preview}
             />
           </Link>
