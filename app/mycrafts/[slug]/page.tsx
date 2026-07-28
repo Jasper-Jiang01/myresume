@@ -15,7 +15,7 @@ export function generateMetadata({
   const project = projects[params.slug];
   if (!project) return { title: "Project Not Found" };
   return {
-    title: `${project.title} · Jiang Wenze`,
+    title: `${project.title} · Jiang Wenzhe`,
     description: project.description,
   };
 }
