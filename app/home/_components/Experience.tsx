@@ -8,7 +8,7 @@
  */
 
 import Image from "next/image";
-import { experience } from "@/lib/content";
+import { experience } from "../_content/content";
 import { withBasePath } from "@/lib/paths";
 import { SectionCard } from "./SectionCard";
 

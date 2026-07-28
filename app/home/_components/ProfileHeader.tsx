@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { InfoChip } from "./InfoChip";
-import { profile } from "@/lib/content";
+import { profile } from "../_content/content";
 import { withBasePath } from "@/lib/paths";
 
 export function ProfileHeader() {

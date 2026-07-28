@@ -7,7 +7,7 @@
  *  - items: string[]，工具
  */
 
-import { tools } from "@/lib/content";
+import { tools } from "../_content/content";
 import { BulletItem } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 

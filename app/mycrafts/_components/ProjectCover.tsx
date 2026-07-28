@@ -20,9 +20,12 @@ type ProjectCoverProps = {
   previewConfig: ProjectPreview;
 };
 
+const HOVER_SCALE = 1.1;
+
 export function ProjectCover({ src, title, previewConfig }: ProjectCoverProps) {
   const coverRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [isHovered, setIsHovered] = useState(false);
 
   const { baseWidth, baseHeight } = previewConfig;
   const zoom = previewConfig.zoom ?? 1;
@@ -35,26 +38,45 @@ export function ProjectCover({ src, title, previewConfig }: ProjectCoverProps) {
 
     const updateScale = () => {
       const containerWidth = el.clientWidth;
-      setScale((containerWidth / baseWidth) * zoom);
+      // 防御：容器宽度或基准宽度为 0 时跳过，避免产生 NaN/Infinity
+      if (containerWidth > 0 && baseWidth > 0) {
+        setScale((containerWidth / baseWidth) * zoom);
+      }
     };
 
     updateScale();
+
+    // 特性检测：不支持 ResizeObserver 时仅执行一次 updateScale 作为兜底
+    if (typeof ResizeObserver === "undefined") return;
+
     const observer = new ResizeObserver(updateScale);
     observer.observe(el);
     return () => observer.disconnect();
   }, [baseWidth, zoom]);
 
   return (
-    <div ref={coverRef} className="relative h-full w-full">
-      <LazyIframe
-        src={src}
-        title={title}
-        width={baseWidth}
-        height={baseHeight}
-        scale={scale}
-        offsetX={offsetX}
-        offsetY={offsetY}
-      />
+    <div
+      ref={coverRef}
+      className="relative h-full w-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className="h-full w-full transition-transform duration-500 ease-out"
+        style={{
+          transform: isHovered ? `scale(${HOVER_SCALE})` : "scale(1)",
+        }}
+      >
+        <LazyIframe
+          src={src}
+          title={title}
+          width={baseWidth}
+          height={baseHeight}
+          scale={scale}
+          offsetX={offsetX}
+          offsetY={offsetY}
+        />
+      </div>
     </div>
   );
 }

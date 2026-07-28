@@ -8,7 +8,7 @@
  *  - passionLabel: string，兴趣爱好标签
  *  - passions: string，兴趣爱好
  */
-import { aboutMe } from "@/lib/content";
+import { aboutMe } from "../_content/content";
 import { SectionCard } from "./SectionCard";
 
 export function AboutMe() {

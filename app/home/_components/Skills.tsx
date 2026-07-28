@@ -7,7 +7,7 @@
  *  - rows: string[][]，技能
  */
 
-import { skills } from "@/lib/content";
+import { skills } from "../_content/content";
 import { SectionCard } from "./SectionCard";
 
 /** Figma: Skills */

@@ -28,6 +28,9 @@ export default function ProjectDetail({
   const { slug } = params;
   const project = projects[slug];
 
+  // 注意：当前使用 output: "export" 纯静态导出模式，
+  // generateStaticParams 之外的 slug 不会生成对应 HTML 文件，
+  // 这段兜底 UI 仅在 next dev / next start 开发/预览模式下生效。
   if (!project) {
     return (
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-4">

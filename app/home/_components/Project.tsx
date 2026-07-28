@@ -6,7 +6,7 @@
  *  - title: string，标题
  *  - items: string[]，作品
  */
-import { project } from "@/lib/content";
+import { project } from "../_content/content";
 import { BulletItem } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 

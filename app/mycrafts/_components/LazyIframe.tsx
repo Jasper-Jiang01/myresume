@@ -36,6 +36,12 @@ export function LazyIframe({
     const el = ref.current;
     if (!el) return;
 
+    // 特性检测：不支持 IntersectionObserver 时直接加载 iframe
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+
     // 不可见时挂一个轻量占位，可见时再挂 iframe
     const observer = new IntersectionObserver(
       ([entry]) => {
