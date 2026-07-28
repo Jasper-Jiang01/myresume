@@ -1,63 +1,34 @@
 import { ProjectCard } from "./_components/ProjectCard";
-import { ProjectGrid } from "./_components/ProjectGrid";
 import { SiteFooter } from "./_components/SiteFooter";
 import { SiteHeader } from "./_components/SiteHeader";
+import projects from "./_content/projects";
+import Link from "next/link";
 
 /**
  * 个人作品页
- * 参考 caiguangxi.com 的作品网格布局
- * 内容待填充——替换 projects 数组中的数据即可
+ * cssdoodle 项目集 —— 纯 CSS / GSAP 动效实验
  */
-
-const projects = [
-  {
-    title: "作品 1",
-    category: "Brand, Website",
-    image: "/images/list-dot.svg",
-  },
-  {
-    title: "作品 2",
-    category: "Product, AI Art",
-    image: "/images/list-dot.svg",
-  },
-  {
-    title: "作品 3",
-    category: "Data Visualization",
-    image: "/images/list-dot.svg",
-  },
-  {
-    title: "作品 4",
-    category: "3D, Motion",
-    image: "/images/list-dot.svg",
-  },
-  {
-    title: "作品 5",
-    category: "Website",
-    image: "/images/list-dot.svg",
-  },
-  {
-    title: "作品 6",
-    category: "Brand",
-    image: "/images/list-dot.svg",
-  },
-];
 
 export default function MyCrafts() {
   return (
     <div className="relative z-10 min-h-screen">
       <SiteHeader />
 
-      <main className="mx-auto max-w-[1400px] px-4 pt-8 sm:px-8 sm:pt-16">
-        <ProjectGrid>
-          {projects.map((project) => (
+      <main className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-4 pt-8 sm:grid-cols-2 sm:gap-6 sm:px-8 sm:pt-16 lg:grid-cols-3 lg:gap-8">
+        {Object.entries(projects).map(([slug, project]) => (
+          <Link
+            key={slug}
+            href={`/mycrafts/${slug}`}
+            className="block outline-none"
+          >
             <ProjectCard
-              key={project.title}
               title={project.title}
               category={project.category}
-              image={project.image}
+              previewSrc={`/cssdoodle/${slug}/index.html`}
+              previewConfig={project.preview}
             />
-          ))}
-        </ProjectGrid>
+          </Link>
+        ))}
       </main>
 
       <SiteFooter />

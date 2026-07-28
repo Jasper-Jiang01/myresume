@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GSAP rotateY Draggable</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <main class="demo">
+    <div class="scene" id="trigger">
+      <div class="card" id="card">
+        <section class="face front">
+          <h1>拖动<br>旋转</h1>
+        </section>
+
+        <section class="face back">
+          <h1>GSAP<br>旋转Y轴</h1>
+        </section>
+      </div>
+    </div>
+
+    <p>
+      水平拖动或轻拂卡片来控制 <code>rotationY</code>。
+      本演示使用一个隐藏的 Draggable 代理来接收输入，然后将代理的 <code>x</code> 值映射为卡片的 3D 旋转。
+    </p>
+
+    <p>
+      开启 <strong>限制模式</strong> 可以将旋转角度钳制在范围内，或切换到
+      <strong>自由旋转</strong> 模式让惯性带动旋转超越限制。
+      下方读数显示当前旋转角度值。
+    </p>
+
+    <div class="controls">
+      <label class="toggle">
+        <input id="bounded" type="checkbox" checked>
+        <span class="switch" aria-hidden="true"></span>
+        <span>Mode:</span>
+        <strong id="mode">限制模式</strong>
+      </label>
+
+      <div class="pill">
+        rotationY:
+        <strong><span id="value">0</span>&deg;</strong>
+      </div>
+
+      <button id="reset">重置</button>
+    </div>
+  </main>
+
+  <!-- OKAY DEV - Branding -->
+
+  <div class="okay-container">
+    <img id="okaydev-logo" src="https://files.okaydev.co/production/images/ui/logos/logo-okaydev-light.svg?dm=1729245907" alt="OKAY DEV logo">
+    <a href="https://okaydev.co/?ref=codepen-rotatey-draggable" target="_blank" class="okay-description">A design + development community</a>
+  </div>
+
+  <script src="https://esm.sh/gsap@3.13.0"></script>
+  <script src="https://esm.sh/gsap@3.13.0/Draggable"></script>
+  <script src="https://esm.sh/gsap@3.13.0/InertiaPlugin"></script>
+  <script type="module" src="./script.js"></script>
+</body>
+
+</html>
