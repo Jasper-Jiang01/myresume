@@ -31,9 +31,12 @@ export const project = {
 export const tools = {
   title: "工具",
   items: [
-    "插件设计 - Figma& Mastergo",
-    "思考 - 项目思考与复盘",
-    "思考 - 项目思考与复盘",
+    { label: "插件设计 - Figma& Mastergo" },
+    { label: "思考 - 项目思考与复盘" },
+    {
+      label: "自定义按钮生成平台",
+      href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
+    },
   ],
 };
 

@@ -17,8 +17,8 @@ export function Tools() {
     <SectionCard title={tools.title} icon="/assets/section-tools.svg" iconImageSize={18}>
       <ul className="flex flex-col gap-2">
         {tools.items.map((item, index) => (
-          <li key={`${item}-${index}`}>
-            <BulletItem label={item} />
+          <li key={`${item.label}-${index}`}>
+            <BulletItem label={item.label} href={item.href} />
           </li>
         ))}
       </ul>
