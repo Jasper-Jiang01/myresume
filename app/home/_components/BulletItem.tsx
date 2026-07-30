@@ -1,13 +1,16 @@
 import Image from "next/image";
 import { withBasePath } from "@/lib/paths";
+import { HoverPreviewCard } from "./HoverPreviewCard";
 
 type BulletItemProps = {
   label: string;
   /** 若提供，整行渲染为可点击的外链跳转 */
   href?: string;
+  /** hover 预览卡片的描述文案，仅在 href 存在时生效 */
+  previewDescription?: string;
 };
 
-export function BulletItem({ label, href }: BulletItemProps) {
+export function BulletItem({ label, href, previewDescription }: BulletItemProps) {
   const content = (
     <>
       <Image
@@ -28,14 +31,14 @@ export function BulletItem({ label, href }: BulletItemProps) {
 
   if (href) {
     return (
-      <a
+      <HoverPreviewCard
         href={withBasePath(href)}
-        target="_blank"
-        rel="noopener noreferrer"
+        previewTitle={label}
+        previewDescription={previewDescription}
         className="flex items-center gap-2 text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
       >
         {content}
-      </a>
+      </HoverPreviewCard>
     );
   }
 

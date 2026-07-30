@@ -18,7 +18,11 @@ export function Tools() {
       <ul className="flex flex-col gap-2">
         {tools.items.map((item, index) => (
           <li key={`${item.label}-${index}`}>
-            <BulletItem label={item.label} href={item.href} />
+            <BulletItem
+              label={item.label}
+              href={item.href}
+              previewDescription={item.previewDescription}
+            />
           </li>
         ))}
       </ul>

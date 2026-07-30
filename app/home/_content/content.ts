@@ -36,6 +36,7 @@ export const tools = {
     {
       label: "CSS灵动按钮工坊",
       href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
+      previewDescription: "可视化编辑多状态按钮流转动效的小工具",
     },
   ],
 };
