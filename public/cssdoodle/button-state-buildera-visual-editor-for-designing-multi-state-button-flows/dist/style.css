@@ -87,7 +87,7 @@ body {
   color: var(--black);
 }
 .hero-gradient {
-  background: linear-gradient(135deg, #86b800 0%, #09c12a 50%, #2979ff 100%);
+  background: linear-gradient(135deg, #bfff00 0%, #09c12a 50%, #2979ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -2490,7 +2490,7 @@ header h1 {
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -2511,7 +2511,7 @@ header h1 {
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
 }
 .state-info-modal-title {
@@ -2685,3 +2685,21 @@ header h1 {
   background: rgba(120, 100, 200, 0.22);
   color: #7c3aed;
 }
+
+/* ── i18n lang toggle ── */
+.lang-toggle {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+.lang-toggle:hover { opacity: 1; }

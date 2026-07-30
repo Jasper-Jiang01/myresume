@@ -1,22 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Button State Builder</title>
+    <title>按钮状态构建器</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
   </head>
     
   <body>
   <header>
-  <h1>Button State Builder</h1>
+  <h1 data-i18n="h1">按钮状态构建器</h1>
 
   <div class="header-right">
+    <button class="lang-toggle" id="lang-toggle-btn" type="button" onclick="toggleLang()">EN</button>
     <span style="font-size:10px;opacity:0.4;font-family:&#39;DM Mono&#39;,monospace">v3.1</span>
 
-    <button class="editor-toggle" id="editor-toggle-btn" onclick="toggleEditor()">✨ New Button Builder</button>
+    <button class="editor-toggle" id="editor-toggle-btn" onclick="toggleEditor()">✨ 新建按钮构建器</button>
   </div>
 </header>
 
@@ -24,25 +25,25 @@
 <section class="hero-section" id="hero">
   <div class="hero-bg-grid"></div>
   <div class="hero-content">
-    <div class="hero-eyebrow">Free tool · No signup</div>
-    <h1 class="hero-headline">Design button states<br><span class="hero-gradient">that feel alive</span></h1>
-    <p class="hero-sub">Build idle → loading → success → error flows visually.<br>Get production-ready CSS + JS in seconds.</p>
+    <div class="hero-eyebrow" data-i18n="hero-eyebrow">免费工具</div>
+    <h1 class="hero-headline" data-i18n="hero-headline">设计有生命力的<br><span class="hero-gradient">按钮状态</span></h1>
+    <p class="hero-sub" data-i18n="hero-sub">可视化构建 默认 → 加载 → 成功 → 错误 流程。<br>数秒获得生产级 CSS + JS。</p>
     <div class="hero-chips">
-      <span class="hero-chip">✦ 6 animation types</span>
-      <span class="hero-chip">✦ Gradient builder</span>
-      <span class="hero-chip">✦ Icon + motion</span>
-      <span class="hero-chip">✦ Copy-paste CSS</span>
+      <span class="hero-chip" data-i18n="chip-1">✦ 6 种动画类型</span>
+      <span class="hero-chip" data-i18n="chip-2">✦ 渐变构建器</span>
+      <span class="hero-chip" data-i18n="chip-3">✦ 图标 + 动效</span>
+      <span class="hero-chip" data-i18n="chip-4">✦ 复制粘贴 CSS</span>
     </div>
     <div class="hero-cta-row">
-      <a class="hero-cta-btn" href="#hero-showcase" onclick="event.preventDefault(); document.querySelector('.hero-showcase').scrollIntoView({behavior:'smooth', block:'center'})">See it in action ↓</a>
+      <a class="hero-cta-btn" href="#hero-showcase" onclick="event.preventDefault(); document.querySelector('.hero-showcase').scrollIntoView({behavior:'smooth', block:'center'})" data-i18n="hero-cta">查看效果 ↓</a>
     </div>
-    <p class="hero-cta-hint">Every button below is editable — pick one and make it yours.</p>
+    <p class="hero-cta-hint" data-i18n="hero-hint">下方按钮均可编辑 — 挑选一个开始自定义。</p>
   </div>
 
   <!-- Showcase of buttons actually built with the tool — auto-playing through their real states -->
   <div class="hero-showcase">
     <div class="hshow-card hshow-featured hshow-tilt-l" onclick="editPreset('deploy')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')editPreset('deploy')">
-      <div class="hshow-tag">🎨 Customize this one</div>
+      <div class="hshow-tag">🎨 自定义此按钮</div>
       <div class="hshow-stage">
         <button class="sb" id="btn-hero-deploy">
           <div class="sb-bg" id="btn-hero-deploy-bg"></div>
@@ -60,10 +61,10 @@
         </button>
       </div>
       <div class="state-track" id="track-hero-deploy" style="display:none"></div>
-      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('deploy')">Customize the Deploy Button →</a>
+      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('deploy')">自定义 Deploy 按钮 →</a>
     </div>
     <div class="hshow-card hshow-featured hshow-tilt-c" onclick="editPreset('match')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')editPreset('match')">
-      <div class="hshow-tag">🎨 Customize this one</div>
+      <div class="hshow-tag">🎨 自定义此按钮</div>
       <div class="hshow-stage">
         <button class="sb" id="btn-hero-match">
           <div class="sb-bg" id="btn-hero-match-bg"></div>
@@ -81,10 +82,10 @@
         </button>
       </div>
       <div class="state-track" id="track-hero-match" style="display:none"></div>
-      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('match')">Customize the Matchmaking Button →</a>
+      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('match')">自定义 Matchmaking 按钮 →</a>
     </div>
     <div class="hshow-card hshow-featured hshow-tilt-r" onclick="editPreset('like')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')editPreset('like')">
-      <div class="hshow-tag">🎨 Customize this one</div>
+      <div class="hshow-tag">🎨 自定义此按钮</div>
       <div class="hshow-stage">
         <button class="sb" id="btn-hero-like">
           <div class="sb-bg" id="btn-hero-like-bg"></div>
@@ -102,7 +103,7 @@
         </button>
       </div>
       <div class="state-track" id="track-hero-like" style="display:none"></div>
-      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('like')">Customize the Like Button →</a>
+      <a class="hshow-edit-btn" href="#builder" onclick="event.preventDefault(); event.stopPropagation(); editPreset('like')">自定义 Like 按钮 →</a>
     </div>
   </div>
 </section>
@@ -1254,13 +1255,14 @@
 <!-- ── FOOTER ── -->
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <span class="site-footer-brand">Button State Builder</span>
+    <span class="site-footer-brand">按钮状态构建器</span>
     <div class="site-footer-links">
-      <a href="https://m.oxoxoxo.online/refactor/api/uploads/hello-82f57983-b09d-411b-9265-0e60b0f4a845.html#builder">Back to top ↑</a>
+      <a href="https://m.oxoxoxo.online/refactor/api/uploads/hello-82f57983-b09d-411b-9265-0e60b0f4a845.html#builder">回到顶部 ↑</a>
     </div>
-    <span class="site-footer-copy">Free tool · No signup · Made for developers and designers</span>
+    <span class="site-footer-copy">免费工具 · 无需注册 · 为开发者与设计师打造</span>
   </div>
 </footer>
     <script src="./script.js"></script>
+    <script src="./i18n.js"></script>
   </body>
 </html>

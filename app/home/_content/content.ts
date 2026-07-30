@@ -34,7 +34,7 @@ export const tools = {
     { label: "插件设计 - Figma& Mastergo" },
     { label: "思考 - 项目思考与复盘" },
     {
-      label: "自定义按钮生成平台",
+      label: "CSS灵动按钮工坊",
       href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
     },
   ],
