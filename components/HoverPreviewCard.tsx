@@ -7,7 +7,7 @@
  * 组件属性：
  *  - href: string，跳转链接
  *  - previewTitle: string，预览卡片标题
- *  - previewDescription: string，预览卡片描述
+ *  - previewImage?: string，预览图片路径
  *  - children: ReactNode，触发 hover 的可点击内容
  *  - className: string，触发元素的类名
  */
@@ -31,8 +31,7 @@ const CARD_OFFSET_Y = 14;
 type HoverPreviewCardProps = {
   href: string;
   previewTitle: string;
-  previewDescription?: string;
-  /** 预览图片路径，若提供则替换 previewDescription 文本 */
+  /** 预览图片路径 */
   previewImage?: string;
   children: ReactNode;
   className?: string;
@@ -41,7 +40,6 @@ type HoverPreviewCardProps = {
 export function HoverPreviewCard({
   href,
   previewTitle,
-  previewDescription,
   previewImage,
   children,
   className,
@@ -56,7 +54,12 @@ export function HoverPreviewCard({
   // 导致首次客户端渲染与服务端输出结构不一致（hydration mismatch）
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // 预加载预览图，避免 hover 时才请求导致延迟
+    if (previewImage) {
+      const img = new window.Image();
+      img.src = withBasePath(previewImage);
+    }
+  }, [previewImage]);
 
   const [, api] = useTrail<{ x: number }>(2, (index) => ({
     x: 0,
@@ -117,8 +120,7 @@ export function HoverPreviewCard({
             }}
           >
             <div className="flex items-center justify-center bg-white p-0">
-              {previewImage ? (
-                // 调整图片的大小，样式等
+              {previewImage && (
                 <Image
                   src={withBasePath(previewImage)}
                   alt={previewTitle}
@@ -127,9 +129,7 @@ export function HoverPreviewCard({
                   className="rounded-lg border border-[#EEEEEE]"
                   unoptimized
                 />
-              ) : previewDescription ? (
-                <p className="mt-1 text-sm text-muted">{previewDescription}</p>
-              ) : null}
+              )}
             </div>
           </div>,
           document.body

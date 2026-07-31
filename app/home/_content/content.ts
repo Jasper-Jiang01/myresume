@@ -31,7 +31,6 @@ export const project = {
 type ToolItem = {
   label: string;
   href?: string;
-  previewDescription?: string;
   previewImage?: string;
 };
 
@@ -39,11 +38,11 @@ export const tools = {
   title: "工具",
   items: [
     { label: "插件设计 - Figma& Mastergo" },
-    { label: "动效实验站", href: "/mycrafts", previewImage: "/assets/button-coverpng2.png" },
+    { label: "动效实验站", href: "/mycrafts", previewImage: "/assets/preview-mycrafts.png" },
     {
       label: "CSS灵动按钮工坊",
       href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
-      previewImage: "/assets/button-coverpng.png",
+      previewImage: "/assets/preview-button-workshop.png",
     },
   ] as ToolItem[],
 };

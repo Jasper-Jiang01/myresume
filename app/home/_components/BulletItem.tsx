@@ -8,7 +8,7 @@ import { HoverPreviewCard } from "@/components/HoverPreviewCard";
  * 组件属性：
  *  - label: string，列表项文本
  *  - href: string，跳转链接
- *  - previewDescription: string，预览卡片描述
+ *  - previewImage?: string，预览图片路径
  */
 
 
@@ -16,13 +16,11 @@ type BulletItemProps = {
   label: string;
   /** 若提供，整行渲染为可点击的外链跳转 */
   href?: string;
-  /** hover 预览卡片的描述文案，仅在 href 存在时生效 */
-  previewDescription?: string;
-  /** hover 预览卡片的图片路径，若提供则替换 previewDescription 文本 */
+  /** hover 预览卡片的图片路径 */
   previewImage?: string;
 };
 
-export function BulletItem({ label, href, previewDescription, previewImage }: BulletItemProps) {
+export function BulletItem({ label, href, previewImage }: BulletItemProps) {
   const content = (
     <>
       <Image
