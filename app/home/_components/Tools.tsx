@@ -22,6 +22,7 @@ export function Tools() {
               label={item.label}
               href={item.href}
               previewDescription={item.previewDescription}
+              previewImage={item.previewImage}
             />
           </li>
         ))}

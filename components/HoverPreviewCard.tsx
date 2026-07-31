@@ -15,6 +15,8 @@
 import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTrail } from "@react-spring/web";
+import Image from "next/image";
+import { withBasePath } from "@/lib/paths";
 
 // 快端点：高 tension + 低 friction，紧跟鼠标
 const FAST_CONFIG = { tension: 1500, friction: 40 };
@@ -30,6 +32,8 @@ type HoverPreviewCardProps = {
   href: string;
   previewTitle: string;
   previewDescription?: string;
+  /** 预览图片路径，若提供则替换 previewDescription 文本 */
+  previewImage?: string;
   children: ReactNode;
   className?: string;
 };
@@ -38,6 +42,7 @@ export function HoverPreviewCard({
   href,
   previewTitle,
   previewDescription,
+  previewImage,
   children,
   className,
 }: HoverPreviewCardProps) {
@@ -111,9 +116,18 @@ export function HoverPreviewCard({
               transformOrigin: "50% 100%",
             }}
           >
-            <div className="w-56 rounded-card border border-[#DDDDDD] bg-white p-3 shadow-lg">
-              <p className="text-body font-medium text-black">{previewTitle}</p>
-              {previewDescription ? (
+            <div className="flex items-center justify-center bg-white p-0">
+              {previewImage ? (
+                // 调整图片的大小，样式等
+                <Image
+                  src={withBasePath(previewImage)}
+                  alt={previewTitle}
+                  width={220}
+                  height={160}
+                  className="rounded-lg border border-[#EEEEEE]"
+                  unoptimized
+                />
+              ) : previewDescription ? (
                 <p className="mt-1 text-sm text-muted">{previewDescription}</p>
               ) : null}
             </div>

@@ -1,6 +1,16 @@
 import Image from "next/image";
 import { withBasePath } from "@/lib/paths";
-import { HoverPreviewCard } from "./HoverPreviewCard";
+import { HoverPreviewCard } from "@/components/HoverPreviewCard";
+
+/**
+ * 组件名称：子弹项
+ * 组件描述：BulletItem 组件是用于显示一个列表项，包含图标和文本。
+ * 组件属性：
+ *  - label: string，列表项文本
+ *  - href: string，跳转链接
+ *  - previewDescription: string，预览卡片描述
+ */
+
 
 type BulletItemProps = {
   label: string;
@@ -8,9 +18,11 @@ type BulletItemProps = {
   href?: string;
   /** hover 预览卡片的描述文案，仅在 href 存在时生效 */
   previewDescription?: string;
+  /** hover 预览卡片的图片路径，若提供则替换 previewDescription 文本 */
+  previewImage?: string;
 };
 
-export function BulletItem({ label, href, previewDescription }: BulletItemProps) {
+export function BulletItem({ label, href, previewDescription, previewImage }: BulletItemProps) {
   const content = (
     <>
       <Image
@@ -34,7 +46,7 @@ export function BulletItem({ label, href, previewDescription }: BulletItemProps)
       <HoverPreviewCard
         href={withBasePath(href)}
         previewTitle={label}
-        previewDescription={previewDescription}
+        previewImage={previewImage ? withBasePath(previewImage) : undefined}
         className="flex items-center gap-2 text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
       >
         {content}

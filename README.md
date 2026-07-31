@@ -51,11 +51,12 @@ lib/
 └── paths.ts              # withBasePath 工具函数
 public/
 ├── assets/               # 图标资源
-├── cssdoodle/            # CSSDoodle 纯 CSS 动效 demo
+├── cssdoodle/            # 交互 demo 集合
 │   ├── neon-glass-3d-cards-ui-lab/
 │   ├── gsap-rotatey-draggable/
 │   ├── pure-css-parallax-card-on-hover/
-│   └── after-sign-off/
+│   ├── after-sign-off/
+│   └── button-state-buildera-visual-editor-for-designing-multi-state-button-flows/
 └── images/               # 头像与图片资源
 ```
 

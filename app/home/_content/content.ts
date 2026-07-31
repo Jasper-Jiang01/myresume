@@ -28,17 +28,24 @@ export const project = {
   items: ["美团项目1", "美团项目2", "Agent开发项目", "蚂蚁国际项目"],
 };
 
+type ToolItem = {
+  label: string;
+  href?: string;
+  previewDescription?: string;
+  previewImage?: string;
+};
+
 export const tools = {
   title: "工具",
   items: [
     { label: "插件设计 - Figma& Mastergo" },
-    { label: "思考 - 项目思考与复盘" },
+    { label: "动效实验站", href: "/mycrafts", previewImage: "/assets/button-coverpng2.png" },
     {
       label: "CSS灵动按钮工坊",
       href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
-      previewDescription: "可视化编辑多状态按钮流转动效的小工具",
+      previewImage: "/assets/button-coverpng.png",
     },
-  ],
+  ] as ToolItem[],
 };
 
 export const skills = {
