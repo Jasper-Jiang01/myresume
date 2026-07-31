@@ -21,36 +21,45 @@ type BulletItemProps = {
 };
 
 export function BulletItem({ label, href, previewImage }: BulletItemProps) {
-  const content = (
-    <>
-      <Image
-        src={withBasePath("/images/list-dot.svg")}
-        alt=""
-        width={14}
-        height={14}
-        className="size-dot-md shrink-0"
-      />
-      <span
-        className="text-body text-muted"
-        style={href ? { textDecorationLine: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" } : undefined}
-      >
-        {label}
-      </span>
-    </>
+  const icon = (
+    <Image
+      src={withBasePath("/images/list-dot.svg")}
+      alt=""
+      width={14}
+      height={14}
+      className="size-dot-md shrink-0"
+    />
+  );
+
+  const textSpan = (
+    <span
+      className="text-body text-muted"
+      style={href ? { textDecorationLine: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" } : undefined}
+    >
+      {label}
+    </span>
   );
 
   if (href) {
     return (
-      <HoverPreviewCard
-        href={withBasePath(href)}
-        previewTitle={label}
-        previewImage={previewImage}
-        className="flex items-center gap-2 text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
-      >
-        {content}
-      </HoverPreviewCard>
+      <div className="flex items-center gap-2">
+        {icon}
+        <HoverPreviewCard
+          href={withBasePath(href)}
+          previewTitle={label}
+          previewImage={previewImage}
+          className="text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
+        >
+          {textSpan}
+        </HoverPreviewCard>
+      </div>
     );
   }
 
-  return <div className="flex items-center gap-2">{content}</div>;
+  return (
+    <div className="flex items-center gap-2">
+      {icon}
+      {textSpan}
+    </div>
+  );
 }
