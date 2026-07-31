@@ -44,7 +44,7 @@ export function BulletItem({ label, href, previewImage }: BulletItemProps) {
       <HoverPreviewCard
         href={withBasePath(href)}
         previewTitle={label}
-        previewImage={previewImage ? withBasePath(previewImage) : undefined}
+        previewImage={previewImage}
         className="flex items-center gap-2 text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
       >
         {content}
