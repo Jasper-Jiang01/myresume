@@ -25,7 +25,7 @@ export function AboutMe() {
           ))}
         </div>
         <div className="flex flex-col gap-1">
-          <p>{aboutMe.passionLabel}</p>
+          <p><strong className="font-medium text-primary">{aboutMe.passionLabel}</strong></p>
           <p>{aboutMe.passions}</p>
         </div>
       </div>
