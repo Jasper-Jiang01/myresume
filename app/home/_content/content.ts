@@ -25,7 +25,12 @@ export const aboutMe = {
 
 export const project = {
   title: "作品",
-  items: ["美团项目1", "美团项目2", "Agent开发项目", "蚂蚁国际项目"],
+  items: [
+    { label: "个人作品集", icon: "/assets/meituanicon.png" },
+    { label: "美团项目2" , icon: "/assets/meituanicon.png"},
+    { label: "Agent开发项目" },
+    { label: "蚂蚁国际项目" },
+  ],
 };
 
 type ToolItem = {

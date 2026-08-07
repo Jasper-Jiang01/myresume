@@ -15,8 +15,8 @@ export function Project() {
     <SectionCard title={project.title} icon="/assets/section-project.svg">
       <ul className="flex flex-col gap-2">
         {project.items.map((item) => (
-          <li key={item}>
-            <BulletItem label={item} />
+          <li key={item.label}>
+            <BulletItem label={item.label} icon={item.icon} />
           </li>
         ))}
       </ul>

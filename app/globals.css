@@ -24,7 +24,7 @@
  * 字号走 rem token；布局用 sm: 断点重排（见 skills/web-fontsize-adaptation.md）
  */
 html {
-  font-size: 17px; /* 1rem = 16px，全站基准 */
+  font-size: 18px; /* 1rem = 16px，全站基准 */
 }
 
 html,

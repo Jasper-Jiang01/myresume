@@ -14,14 +14,24 @@ import { HoverPreviewCard } from "@/components/HoverPreviewCard";
 
 type BulletItemProps = {
   label: string;
+  /** 自定义图标路径，替换默认圆点 */
+  icon?: string;
   /** 若提供，整行渲染为可点击的外链跳转 */
   href?: string;
   /** hover 预览卡片的图片路径 */
   previewImage?: string;
 };
 
-export function BulletItem({ label, href, previewImage }: BulletItemProps) {
-  const icon = (
+export function BulletItem({ label, icon: customIcon, href, previewImage }: BulletItemProps) {
+  const icon = customIcon ? (
+    <Image
+      src={withBasePath(customIcon)}
+      alt=""
+      width={16}
+      height={16}
+      className="size-dot-md shrink-0"
+    />
+  ) : (
     <Image
       src={withBasePath("/images/list-dot.svg")}
       alt=""
