@@ -38,7 +38,13 @@ type ProjectItem = {
 // 显式类型标注会做结构化类型检查（赋值兼容性检查），既能在编译期发现字面量与 ProjectItem 不符的问题，
 // 又能让 items 的类型正确宽化为 ProjectItem[]，避免下游按可选属性访问时被字面量联合类型收窄报错。
 const projectItems: ProjectItem[] = [
-  { label: "个人作品集", icon: "/assets/meituanicon.png", href: "/personalProject", internal: true },
+  {
+    label: "个人作品集",
+    icon: "/assets/meituanicon.png",
+    href: "/personalProject",
+    previewImage: "/assets/46.jpg",
+    internal: true,
+  },
   { label: "美团项目2" , icon: "/assets/meituanicon.png"},
   { label: "Agent开发项目" },
   { label: "蚂蚁国际项目" },
