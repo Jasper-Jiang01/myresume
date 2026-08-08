@@ -23,7 +23,15 @@ export type ProjectMeta = {
   preview: ProjectPreview;
 };
 
-const projects: Record<string, ProjectMeta> = {
+// 显式声明索引签名返回值可能为 undefined：
+// projects[slug] 的 slug 来自路由参数，并非所有 slug 都在此表中登记，
+// 这样声明可让 TypeScript 在编译期强制调用方处理“项目不存在”的分支，
+// 避免仅凭运行时 `if (!project)` 兜底而类型层面仍是非 undefined 带来的隐性不安全。
+type ProjectMetaMap = {
+  [slug: string]: ProjectMeta | undefined;
+};
+
+const projects: ProjectMetaMap = {
   "neon-glass-3d-cards-ui-lab": {
     title: "Neon Glass · 3D Cards",
     category: "UI Lab, 3D, CSS",

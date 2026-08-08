@@ -22,6 +22,8 @@ export function Tools() {
               label={item.label}
               href={item.href}
               previewImage={item.previewImage}
+              newTab={item.newTab}
+              internal={item.internal}
             />
           </li>
         ))}

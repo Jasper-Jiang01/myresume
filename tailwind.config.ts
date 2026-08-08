@@ -68,6 +68,10 @@ const config: Config = {
       borderWidth: {
         card: "0.75px",
       },
+      transitionTimingFunction: {
+        // 模拟原站 WebGL 插值惯性的阻尼缓动：先快后缓，比 ease-out 更有"跟手感"
+        "expo-out": "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
     },
   },
   plugins: [],

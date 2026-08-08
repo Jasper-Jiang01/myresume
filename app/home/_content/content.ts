@@ -23,33 +23,55 @@ export const aboutMe = {
   passions: "体验设计，动效设计，人工智能，商业思维，产品思维和构成艺术",
 };
 
+type ProjectItem = {
+  label: string;
+  icon?: string;
+  href?: string;
+  previewImage?: string;
+  newTab?: boolean;
+  /** 是否为站内路由（用 next/link 无刷新跳转），默认 false */
+  internal?: boolean;
+};
+
+// 用显式类型标注（而非 `as` 断言）声明 items：
+// `as` 是双向断言，仅在两个类型完全不相关时才会报错，无法捕获“漏传/错传字段”这类问题；
+// 显式类型标注会做结构化类型检查（赋值兼容性检查），既能在编译期发现字面量与 ProjectItem 不符的问题，
+// 又能让 items 的类型正确宽化为 ProjectItem[]，避免下游按可选属性访问时被字面量联合类型收窄报错。
+const projectItems: ProjectItem[] = [
+  { label: "个人作品集", icon: "/assets/meituanicon.png", href: "/personalProject", internal: true },
+  { label: "美团项目2" , icon: "/assets/meituanicon.png"},
+  { label: "Agent开发项目" },
+  { label: "蚂蚁国际项目" },
+];
+
 export const project = {
   title: "作品",
-  items: [
-    { label: "个人作品集", icon: "/assets/meituanicon.png" },
-    { label: "美团项目2" , icon: "/assets/meituanicon.png"},
-    { label: "Agent开发项目" },
-    { label: "蚂蚁国际项目" },
-  ],
+  items: projectItems,
 };
 
 type ToolItem = {
   label: string;
   href?: string;
   previewImage?: string;
+  newTab?: boolean;
+  /** 是否为站内路由（用 next/link 无刷新跳转），默认 false */
+  internal?: boolean;
 };
+
+const toolItems: ToolItem[] = [
+  { label: "插件设计 - Figma& Mastergo" },
+  { label: "动效实验站", href: "/mycrafts", previewImage: "/assets/preview-mycrafts.png", internal: true },
+  {
+    label: "CSS灵动按钮工坊",
+    href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
+    previewImage: "/assets/preview-button-workshop.png",
+    newTab: false,
+  },
+];
 
 export const tools = {
   title: "工具",
-  items: [
-    { label: "插件设计 - Figma& Mastergo" },
-    { label: "动效实验站", href: "/mycrafts", previewImage: "/assets/preview-mycrafts.png" },
-    {
-      label: "CSS灵动按钮工坊",
-      href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
-      previewImage: "/assets/preview-button-workshop.png",
-    },
-  ] as ToolItem[],
+  items: toolItems,
 };
 
 export const skills = {

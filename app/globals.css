@@ -17,6 +17,8 @@
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
     "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  /* --font-serif 由 app/layout.tsx 中 next/font/google 的 Playfair_Display 注入，
+     用于大标题强调（如 Portfolio），此处不再静态声明，避免覆盖字体度量变量 */
 }
 
 /*

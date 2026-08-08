@@ -16,7 +16,14 @@ export function Project() {
       <ul className="flex flex-col gap-2">
         {project.items.map((item) => (
           <li key={item.label}>
-            <BulletItem label={item.label} icon={item.icon} />
+            <BulletItem
+              label={item.label}
+              icon={item.icon}
+              href={item.href}
+              previewImage={item.previewImage}
+              newTab={item.newTab}
+              internal={item.internal}
+            />
           </li>
         ))}
       </ul>

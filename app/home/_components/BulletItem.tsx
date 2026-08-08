@@ -9,6 +9,8 @@ import { HoverPreviewCard } from "@/components/HoverPreviewCard";
  *  - label: string，列表项文本
  *  - href: string，跳转链接
  *  - previewImage?: string，预览图片路径
+ *  - newTab?: boolean，是否在新标签页打开，仅对非站内路由生效；与 internal=true 同时传入无效
+ *  - internal?: boolean，是否为站内路由（用 next/link，不需 withBasePath），默认 false
  */
 
 
@@ -16,13 +18,18 @@ type BulletItemProps = {
   label: string;
   /** 自定义图标路径，替换默认圆点 */
   icon?: string;
-  /** 若提供，整行渲染为可点击的外链跳转 */
+  /** 若提供，整行渲染为可点击的链接跳转；
+   *  若 internal 为 true，应传未经 withBasePath 处理的原始站内路径（如 "/mycrafts"） */
   href?: string;
   /** hover 预览卡片的图片路径 */
   previewImage?: string;
+  /** 是否在新标签页打开，仅对非站内路由生效；与 internal=true 同时传入时会被忽略（开发环境会打印警告） */
+  newTab?: boolean;
+  /** 是否为站内路由，为 true 时使用 next/link 且不对 href 做 withBasePath 处理，默认 false */
+  internal?: boolean;
 };
 
-export function BulletItem({ label, icon: customIcon, href, previewImage }: BulletItemProps) {
+export function BulletItem({ label, icon: customIcon, href, previewImage, newTab, internal }: BulletItemProps) {
   const icon = customIcon ? (
     <Image
       src={withBasePath(customIcon)}
@@ -55,9 +62,11 @@ export function BulletItem({ label, icon: customIcon, href, previewImage }: Bull
       <div className="flex items-center gap-2">
         {icon}
         <HoverPreviewCard
-          href={withBasePath(href)}
+          href={internal ? href : withBasePath(href)}
           previewTitle={label}
           previewImage={previewImage}
+          newTab={newTab}
+          internal={internal}
           className="text-muted no-underline transition-opacity visited:text-muted hover:text-muted hover:opacity-70"
         >
           {textSpan}
