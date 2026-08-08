@@ -69,7 +69,7 @@ export function LazyIframe({
             height,
             transform: `translate(-50%, -50%) scale(${scale}) translate(${offsetX}px, ${offsetY}px)`,
           }}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           loading="lazy"
           tabIndex={-1}
         />

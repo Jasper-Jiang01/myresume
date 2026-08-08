@@ -76,7 +76,7 @@ export default function ProjectDetail({
           src={withBasePath(`/cssdoodle/${slug}/index.html`)}
           title={project.title}
           className="absolute inset-0 h-full w-full border-0"
-          sandbox="allow-scripts allow-same-origin allow-popups"
+          sandbox="allow-scripts allow-popups"
           loading="lazy"
         />
       </div>
