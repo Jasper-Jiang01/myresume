@@ -40,9 +40,31 @@ import {
 import Link from "next/link";
 import "./Dock.css";
 
+/**
+ * 读取系统「减少动态效果」偏好；命中时应禁用/降级 Dock 的放大动效。
+ * 仅在客户端生效，SSR 阶段默认返回 false（首屏无动效差异，避免 hydration mismatch）。
+ */
+function usePrefersReducedMotion(): boolean {
+  const [prefersReduced, setPrefersReduced] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReduced(mql.matches);
+    const handleChange = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, []);
+
+  return prefersReduced;
+}
+
 // motion 包裹 next/link，使 Dock 项在具备放大动效的同时，
 // 保留 <a> 语义（预加载、中键/右键新开标签页、右键菜单等浏览器原生能力）
 const MotionLink = motion.create(Link);
+// motion 包裹原生 <button>，使无 href 的 Dock 项（仅触发点击回调）
+// 保留原生按钮语义（键盘 Enter/Space 触发、可访问性树中的 button role 等），
+// 避免用 div + role="button" + 手动 onKeyDown 模拟按钮行为
+const MotionButton = motion.create("button");
 
 export type DockItemData = {
   icon: ReactNode;
@@ -92,7 +114,7 @@ function DockItem({
   baseItemSize,
   label,
 }: DockItemProps) {
-  const ref = useRef<HTMLDivElement | HTMLAnchorElement>(null);
+  const ref = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const isHovered = useMotionValue(0);
 
   const mouseDistance = useTransform(mouseX, (val) => {
@@ -109,13 +131,6 @@ function DockItem({
     [baseItemSize, magnification, baseItemSize]
   );
   const size = useSpring(targetSize, spring);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onClick?.();
-    }
-  };
 
   const ariaLabel = typeof label === "string" ? label : undefined;
 
@@ -151,19 +166,18 @@ function DockItem({
     );
   }
 
-  // 未提供 href 时保留原有的可交互 div 行为（如仅触发弹层等非导航场景）
+  // 未提供 href 时渲染为原生 <button>（如仅触发弹层等非导航场景），
+  // 原生按钮自带键盘 Enter/Space 触发与可访问性语义，无需手动模拟
   return (
-    <motion.div
-      ref={ref as React.Ref<HTMLDivElement>}
+    <MotionButton
+      ref={ref as React.Ref<HTMLButtonElement>}
+      type="button"
       {...sharedProps}
       onClick={onClick}
-      tabIndex={0}
-      role="button"
       aria-haspopup="true"
-      onKeyDown={handleKeyDown}
     >
       {content}
-    </motion.div>
+    </MotionButton>
   );
 }
 
@@ -217,10 +231,15 @@ export default function Dock({
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  // 命中「减少动态效果」偏好时，感应距离归零 → 放大倍数恒为 baseItemSize，
+  // 即关闭鼠标接近放大效果，同时保留基础的 hover 文案提示（非位移/缩放类，符合规范）
+  const effectiveDistance = prefersReducedMotion ? 0 : distance;
+  const effectiveMagnification = prefersReducedMotion ? baseItemSize : magnification;
 
   const maxHeight = useMemo(
-    () => Math.max(dockHeight, magnification + magnification / 2 + 4),
-    [magnification, dockHeight]
+    () => Math.max(dockHeight, effectiveMagnification + effectiveMagnification / 2 + 4),
+    [effectiveMagnification, dockHeight]
   );
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
@@ -249,8 +268,8 @@ export default function Dock({
             className={item.className}
             mouseX={mouseX}
             spring={spring}
-            distance={distance}
-            magnification={magnification}
+            distance={effectiveDistance}
+            magnification={effectiveMagnification}
             baseItemSize={baseItemSize}
             label={item.label}
           >

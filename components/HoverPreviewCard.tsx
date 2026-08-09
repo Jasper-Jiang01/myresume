@@ -20,7 +20,7 @@
  *  - internal?: boolean，是否为站内路由，为 true 时使用 next/link 且忽略 newTab，默认 false
  */
 
-import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent, type FocusEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTrail } from "@react-spring/web";
 import Image from "next/image";
@@ -135,10 +135,27 @@ export function HoverPreviewCard({
     setVisible(false);
   };
 
+  // 键盘 Tab 聚焦到触发元素时，用其自身位置作为卡片锚点展示预览；
+  // 失焦时隐藏，保证键盘用户也能获得与鼠标 hover 等价的预览体验
+  const handleFocus = (e: FocusEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top - CARD_OFFSET_Y;
+    api.set({ x });
+    setCardPos({ x, y });
+    setVisible(true);
+  };
+
+  const handleBlur = () => {
+    setVisible(false);
+  };
+
   const hoverHandlers = {
     onMouseEnter: handleMouseEnter,
     onMouseMove: handleMouseMove,
     onMouseLeave: handleMouseLeave,
+    onFocus: handleFocus,
+    onBlur: handleBlur,
   };
 
   return (
@@ -174,7 +191,7 @@ export function HoverPreviewCard({
               {previewImage && (
                 <Image
                   src={withBasePath(previewImage)}
-                  alt={previewTitle}
+                  alt=""
                   width={220}
                   height={160}
                   className="rounded-lg border border-[#EEEEEE]"

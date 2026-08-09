@@ -29,7 +29,7 @@ export default function MyCrafts() {
             <Link
               key={slug}
               href={`/mycrafts/${slug}`}
-              className="block outline-none"
+              className="block rounded-card outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <ProjectCard
                 title={project.title}

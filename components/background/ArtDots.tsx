@@ -37,6 +37,12 @@ export default function ArtDots() {
     const el = elRef.current;
     if (!el) return;
 
+    // 尊重用户的「减少动态效果」系统偏好：命中时时间参数固定，
+    // 点阵渲染为静止的一帧而非持续噪声运动，仍保留装饰性视觉但不产生动效
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
     sizeRef.current = {
       w: window.innerWidth,
       h: window.innerHeight,
@@ -73,7 +79,8 @@ export default function ArtDots() {
       circle: (x: number, y: number, d: number) => void;
     }) => {
       background("#ffffff");
-      const t = +new Date() / 10000;
+      // 固定时间参数 → noise 输出恒定，画面静止不再持续变化
+      const t = prefersReducedMotion ? 0 : +new Date() / 10000;
       const offsetY = offsetYRef.current;
 
       for (const p of points.current) {

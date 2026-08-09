@@ -60,7 +60,7 @@ export function ProjectCard({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-label={open ? "收起详情" : "展开详情"}
-        className="flex w-full items-center justify-end px-4 py-2 sm:px-6 sm:py-3"
+        className="flex w-full items-center justify-end rounded-card px-4 py-2 outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-6 sm:py-3"
       >
         <span
           className={`shrink-0 text-muted transition-transform duration-300 ease-expo-out ${open ? "rotate-45" : ""}`}
