@@ -23,8 +23,10 @@ export default function PersonalProject() {
 
         <div className="flex flex-row flex-wrap gap-2">
           {projects.map((project, index) => (
+            // 数据源为静态固定顺序的数组、无独立 id/slug 字段，且不会增删排序，
+            // 用 index 做 key 是安全的；避免用 title 做 key 在标题重复时产生冲突风险
             <ProjectCard
-              key={project.title}
+              key={index}
               {...project}
               revealIndex={index}
               className="w-full sm:w-[calc((100%-0.5rem)/2)]"

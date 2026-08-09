@@ -25,16 +25,12 @@ export type SiteDockNavProps = {
 };
 
 export function SiteDockNav({ items }: SiteDockNavProps) {
-  const dockItems = items.map((item) => ({
-    icon: item.icon,
-    label: item.label,
-    href: item.href,
-  }));
-
+  // items 与 Dock 所需的 DockItemData 字段完全一致，直接透传，
+  // 避免每次渲染都重新 map 出一个新数组（无实际字段转换意义）
   return (
     <div className="fixed inset-x-0 bottom-4 z-[99] flex justify-center">
       <div className="relative h-[68px] w-full max-w-[420px]">
-        <Dock items={dockItems} panelHeight={68} baseItemSize={50} magnification={80} />
+        <Dock items={items} panelHeight={68} baseItemSize={50} magnification={80} />
       </div>
     </div>
   );

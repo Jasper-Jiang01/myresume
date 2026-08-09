@@ -30,6 +30,7 @@ import {
   Children,
   cloneElement,
   isValidElement,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -134,12 +135,19 @@ function DockItem({
 
   const ariaLabel = typeof label === "string" ? label : undefined;
 
+  // isHovered 是 useMotionValue，引用在组件生命周期内稳定，
+  // 用 useCallback 固定这几个事件回调，避免每次渲染都创建新函数
+  const handleHoverStart = useCallback(() => isHovered.set(1), [isHovered]);
+  const handleHoverEnd = useCallback(() => isHovered.set(0), [isHovered]);
+  const handleFocus = useCallback(() => isHovered.set(1), [isHovered]);
+  const handleBlur = useCallback(() => isHovered.set(0), [isHovered]);
+
   const sharedProps = {
     style: { width: size, height: size },
-    onHoverStart: () => isHovered.set(1),
-    onHoverEnd: () => isHovered.set(0),
-    onFocus: () => isHovered.set(1),
-    onBlur: () => isHovered.set(0),
+    onHoverStart: handleHoverStart,
+    onHoverEnd: handleHoverEnd,
+    onFocus: handleFocus,
+    onBlur: handleBlur,
     className: `dock-item ${className}`,
     "aria-label": ariaLabel,
   } as const;
@@ -244,17 +252,24 @@ export default function Dock({
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
 
+  // isHovered / mouseX 是 useMotionValue，引用稳定，用 useCallback 固定这两个回调
+  const handlePanelMouseMove = useCallback(
+    ({ pageX }: { pageX: number }) => {
+      isHovered.set(1);
+      mouseX.set(pageX);
+    },
+    [isHovered, mouseX]
+  );
+  const handlePanelMouseLeave = useCallback(() => {
+    isHovered.set(0);
+    mouseX.set(Infinity);
+  }, [isHovered, mouseX]);
+
   return (
     <motion.div style={{ height, scrollbarWidth: "none" }} className="dock-outer">
       <motion.div
-        onMouseMove={({ pageX }) => {
-          isHovered.set(1);
-          mouseX.set(pageX);
-        }}
-        onMouseLeave={() => {
-          isHovered.set(0);
-          mouseX.set(Infinity);
-        }}
+        onMouseMove={handlePanelMouseMove}
+        onMouseLeave={handlePanelMouseLeave}
         className={`dock-panel ${className}`}
         style={{ height: panelHeight }}
         role="toolbar"

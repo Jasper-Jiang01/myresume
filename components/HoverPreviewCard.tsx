@@ -63,14 +63,31 @@ export function HoverPreviewCard({
   // 非站内路由默认新标签页打开；internal=true 时 newTab 恒不生效（next/link 原地跳转）。
   const resolvedNewTab = internal ? false : newTab ?? true;
   const [visible, setVisible] = useState(false);
-  const [cardPos, setCardPos] = useState({ x: 0, y: 0 });
-  const [rotate, setRotate] = useState(0);
+  // cardPos.y 仅在 enter/focus 时设置一次（不随鼠标移动高频变化），保留为 state 即可
+  const [cardY, setCardY] = useState(0);
   const [mounted, setMounted] = useState(false);
   const bottomX = useRef(0);
+  // cardX / rotate 随鼠标移动由 spring 动画每帧更新，改为直接写 DOM（transform）
+  // 而不经过 React state，避免鼠标移动时的高频 setState 触发整棵子树重渲染
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const cardXRef = useRef(0);
+  const rotateRef = useRef(0);
+  // useTrail 的 onChange 回调在初始化时创建、不随渲染更新闭包，
+  // 用 ref 同步保存 visible 最新值供该回调读取，避免读到过期值
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
   // 持有预加载 Image 实例的引用，防止其在挂载期间被 GC 回收导致预加载请求被提前中断。
   // 若仅在 effect 内创建局部变量 `new window.Image()` 而不持有引用，
   // 该对象在部分浏览器实现下可能在请求完成前就被当作垃圾回收，使预加载失效。
   const preloadImageRef = useRef<HTMLImageElement | null>(null);
+
+  // 将当前 cardXRef/rotateRef 的值应用到卡片 DOM 的 transform 上
+  const applyCardTransform = (visibleNow: boolean) => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.left = `${cardXRef.current}px`;
+    el.style.transform = `translate(-50%, -100%) rotate(${rotateRef.current}deg) scale(${visibleNow ? 1 : 0.9})`;
+  };
 
   useEffect(() => {
     // 仅在调用方显式传了 newTab 且与 internal=true 冲突时才提示，
@@ -111,8 +128,11 @@ export function HoverPreviewCard({
         bottomX.current = result.value.x;
       } else {
         const dx = result.value.x - bottomX.current;
-        setRotate(dx * TILT_FACTOR);
-        setCardPos((prev) => ({ ...prev, x: result.value.x }));
+        rotateRef.current = dx * TILT_FACTOR;
+        cardXRef.current = result.value.x;
+        // 该 onChange 回调在 useTrail 初始化时创建、不会随组件渲染更新闭包，
+        // 用 visibleRef.current 读取最新的 visible 值，避免闭包陈旧值问题
+        applyCardTransform(visibleRef.current);
       }
     },
   }));
@@ -123,7 +143,10 @@ export function HoverPreviewCard({
     const y = rect.top - CARD_OFFSET_Y;
     // 瞬移到初始位置，避免第一次出现时从残留坐标飞入
     api.set({ x });
-    setCardPos({ x, y });
+    cardXRef.current = x;
+    rotateRef.current = 0;
+    setCardY(y);
+    applyCardTransform(true);
     setVisible(true);
   };
 
@@ -133,6 +156,7 @@ export function HoverPreviewCard({
 
   const handleMouseLeave = () => {
     setVisible(false);
+    applyCardTransform(false);
   };
 
   // 键盘 Tab 聚焦到触发元素时，用其自身位置作为卡片锚点展示预览；
@@ -142,12 +166,16 @@ export function HoverPreviewCard({
     const x = rect.left + rect.width / 2;
     const y = rect.top - CARD_OFFSET_Y;
     api.set({ x });
-    setCardPos({ x, y });
+    cardXRef.current = x;
+    rotateRef.current = 0;
+    setCardY(y);
+    applyCardTransform(true);
     setVisible(true);
   };
 
   const handleBlur = () => {
     setVisible(false);
+    applyCardTransform(false);
   };
 
   const hoverHandlers = {
@@ -177,13 +205,14 @@ export function HoverPreviewCard({
       {mounted &&
         createPortal(
           <div
+            ref={cardRef}
             aria-hidden
             className="pointer-events-none fixed z-50 transition-[opacity,transform] duration-200 ease-out"
             style={{
-              left: cardPos.x,
-              top: cardPos.y,
+              left: cardXRef.current,
+              top: cardY,
               opacity: visible ? 1 : 0,
-              transform: `translate(-50%, -100%) rotate(${rotate}deg) scale(${visible ? 1 : 0.9})`,
+              transform: `translate(-50%, -100%) rotate(${rotateRef.current}deg) scale(${visible ? 1 : 0.9})`,
               transformOrigin: "50% 100%",
             }}
           >
@@ -191,7 +220,7 @@ export function HoverPreviewCard({
               {previewImage && (
                 <Image
                   src={withBasePath(previewImage)}
-                  alt=""
+                  alt={previewTitle}
                   width={220}
                   height={160}
                   className="rounded-lg border border-[#EEEEEE]"
