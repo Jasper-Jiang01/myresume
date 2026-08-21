@@ -83,8 +83,8 @@ export const tools = {
 export const skills = {
   title: "技能",
   rows: [
-    ["typescript", "react", "next.js"],
-    ["python", "java", "node.js"],
+    ["Typescript", "React", "Next.js"],
+    ["Python", "Java", "Node.js"],
     ["UI/UX设计", "动效", "3D"],
   ],
 };

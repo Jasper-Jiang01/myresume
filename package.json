@@ -5,16 +5,18 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && npm run clean:src",
-    "clean:src": "find dist -type d -name \".src\" -prune -exec rm -rf {} +",
+    "clean:src": "test -d dist && find dist -type d -name \".src\" -prune -exec rm -rf {} + || true",
     "protect:cssdoodle": "node scripts/protect-cssdoodle.js",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@react-spring/web": "^10.1.2",
+    "@supabase/supabase-js": "^2.112.3",
     "gsap": "^3.15.0",
     "motion": "^13.0.0",
     "next": "14.2.35",
+    "openai": "^7.5.0",
     "p5i": "^0.6.0",
     "react": "^18",
     "react-dom": "^18"

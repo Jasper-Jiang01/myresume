@@ -3,10 +3,11 @@
 /**
  * 组件名称：ProjectCard
  * 组件描述：可复用的项目卡片组件，点击头部 toggle 展开/收起详情。
- *          当前为纯图片展示阶段，暂不显示标题/分类/描述文字，
- *          收起态展示封面图，展开态展示更多图片。图片未提供时用占位容器代替。
+ *          封面图下方展示标题与描述两行文字，
+ *          收起态展示封面图+文字，展开态额外展示更多图片。图片未提供时用占位容器代替。
  * 组件属性：
- *  - title: string，项目标题（用于图片 alt 与 React key，不做文字展示）
+ *  - title: string，项目标题，展示于封面图下方
+ *  - description?: string，项目描述，展示于标题下方
  *  - coverImage?: string，封面图片路径；未提供时展示占位容器
  *  - images?: string[]，展开后显示的更多图片；未提供时展示占位容器
  *  - defaultOpen?: boolean，是否默认展开，默认 false
@@ -33,7 +34,7 @@ type ProjectCardProps = {
 function ImagePlaceholder({ label, className = "" }: { label?: string; className?: string }) {
   return (
     <div
-      className={`flex aspect-video w-full items-center justify-center rounded-card border border-dashed border-cardBorder bg-card text-body text-muted ${className}`}
+      className={`flex aspect-video w-full items-center justify-center rounded-2xl border border-dashed border-cardBorder bg-card text-body text-muted ${className}`}
     >
       {label ?? "图片占位"}
     </div>
@@ -42,38 +43,24 @@ function ImagePlaceholder({ label, className = "" }: { label?: string; className
 
 export function ProjectCard({
   title,
+  description,
   coverImage,
   images,
   defaultOpen = false,
   className = "",
   revealIndex = 0,
 }: ProjectCardProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open] = useState(defaultOpen);
   // 多张卡片依次错开进场，每张间隔 80ms，呼应原站画廊逐项浮现的观感
   const revealRef = useScrollReveal<HTMLDivElement>({ delay: revealIndex * 0.08 });
 
   return (
     <div ref={revealRef} className={`overflow-hidden ${className}`}>
-      {/* 头部：仅保留 toggle 展开/收起交互，文字先隐藏 */}
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-expanded={open}
-        aria-label={open ? "收起详情" : "展开详情"}
-        className="flex w-full items-center justify-end rounded-card px-4 py-2 outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-6 sm:py-3"
-      >
-        <span
-          className={`shrink-0 text-muted transition-transform duration-300 ease-expo-out ${open ? "rotate-45" : ""}`}
-          aria-hidden
-        >
-          +
-        </span>
-      </button>
-
+     
       {/* 收起态封面图：始终展示，hover 时轻微放大+上浮，模拟原站悬停命中局部放大的手感 */}
       <div className="px-4 sm:px-6">
         {coverImage ? (
-          <div className="group relative aspect-video w-full overflow-hidden rounded-card">
+          <div className="group relative aspect-video w-full overflow-hidden rounded-2xl">
             <Image
               src={withBasePath(coverImage)}
               alt={title}
@@ -86,10 +73,18 @@ export function ProjectCard({
         )}
       </div>
 
+      {/* 封面图下方文字：标题 + 描述，各占一行 */}
+      <div className="flex flex-col gap-1 px-4 pt-3 sm:px-6">
+        <h3 className="truncate text-title font-semibold text-primary">{title}</h3>
+        {description ? (
+          <p className="truncate text-body text-muted">{description}</p>
+        ) : null}
+      </div>
+
       {/* 展开态内容：仅展示更多图片，文字先隐藏，用贝塞尔曲线过渡做带阻尼感的平滑展开 */}
       <div
         className={`grid transition-[grid-template-rows] duration-500 ease-expo-out ${
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          open ? "grid-rows-[0.5fr]" : "grid-rows-[1fr]"
         }`}
       >
         <div className="overflow-hidden">
@@ -97,7 +92,7 @@ export function ProjectCard({
             {images && images.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {images.map((src, index) => (
-                  <div key={src} className="relative aspect-video overflow-hidden rounded-card">
+                  <div key={src} className="relative aspect-video overflow-hidden rounded-2xl">
                     <Image
                       src={withBasePath(src)}
                       alt={`${title} - ${index + 1}`}
