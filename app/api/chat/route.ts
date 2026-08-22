@@ -13,7 +13,17 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import type {
+  ChatCompletionMessageParam,
+  ChatCompletionToolMessageParam,
+} from "openai/resources/chat/completions";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import {
+  AGENT_TOOLS,
+  encodeNavigateHeader,
+  executeAgentTool,
+  type AgentNavigateAction,
+} from "@/components/myAgent/tools";
 
 export const runtime = "nodejs";
 
@@ -59,6 +69,7 @@ function buildSystemPrompt(): string {
     "你是蒋文喆个人网站上的小助手，女性口吻，简洁友善，像熟悉他作品的同事。",
     "用中文回答访客。只依据下方知识表介绍他的经历、技能和项目；知识表没有的信息就说不确定，不要编造。",
     "可以引导访客去看首页、/personalProject 作品集、/mycrafts 动效实验站。",
+    "当访客明确要求打开、跳转、带去看某个项目或页面时，调用 open_project 工具，不要只丢链接让对方自己点。介绍项目时不要调用该工具。",
     knowledge ? `\n---\n${knowledge}` : "",
   ].join("\n");
 }
@@ -168,33 +179,82 @@ export async function POST(req: NextRequest) {
       conversationId = conv.id as string;
     }
 
-    // 2. 调用 LLM 流式接口
-    const stream = await getOpenAI().chat.completions.create({
-      model: env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus",
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(),
-        },
-        ...messages,
-      ],
-      stream: true,
+    // 2. 调用 LLM：先探测是否要开工具，再流式返回最终回复
+    const openaiClient = getOpenAI();
+    const model = env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus";
+    const llmMessages: ChatCompletionMessageParam[] = [
+      { role: "system", content: buildSystemPrompt() },
+      ...messages,
+    ];
+
+    const first = await openaiClient.chat.completions.create({
+      model,
+      messages: llmMessages,
+      tools: AGENT_TOOLS,
+      tool_choice: "auto",
     });
+
+    const firstMessage = first.choices[0]?.message;
+    let navigate: AgentNavigateAction | undefined;
+    let followupMessages: ChatCompletionMessageParam[] | null = null;
+
+    if (firstMessage?.tool_calls?.length) {
+      const toolMessages: ChatCompletionToolMessageParam[] =
+        firstMessage.tool_calls.map((call) => {
+          if (call.type !== "function") {
+            return {
+              role: "tool",
+              tool_call_id: call.id,
+              content: JSON.stringify({ ok: false, error: "不支持的工具类型" }),
+            };
+          }
+          let args: unknown = {};
+          try {
+            args = JSON.parse(call.function.arguments || "{}");
+          } catch {
+            args = {};
+          }
+          const executed = executeAgentTool(call.function.name, args);
+          if (executed.navigate) navigate = executed.navigate;
+          return {
+            role: "tool",
+            tool_call_id: call.id,
+            content: JSON.stringify(executed.result),
+          };
+        });
+
+      followupMessages = [
+        ...llmMessages,
+        firstMessage,
+        ...toolMessages,
+      ];
+    }
 
     const encoder = new TextEncoder();
     let fullContent = "";
 
     const readable = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content || "";
-          fullContent += text;
-          controller.enqueue(encoder.encode(text));
+        if (followupMessages) {
+          const stream = await openaiClient.chat.completions.create({
+            model,
+            messages: followupMessages,
+            stream: true,
+          });
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content || "";
+            fullContent += text;
+            if (text) controller.enqueue(encoder.encode(text));
+          }
+        } else {
+          const text = firstMessage?.content ?? "";
+          fullContent = text;
+          if (text) controller.enqueue(encoder.encode(text));
         }
+
         controller.close();
 
-        // 3. 流结束后保存助手回复
-        if (conversationId) {
+        if (conversationId && fullContent) {
           await admin.from("messages").insert({
             conversation_id: conversationId,
             role: "assistant",
@@ -209,6 +269,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
         ...(conversationId ? { "x-conversation-id": conversationId } : {}),
+        ...(navigate ? { "x-agent-navigate": encodeNavigateHeader(navigate) } : {}),
       },
     });
   } catch (err) {

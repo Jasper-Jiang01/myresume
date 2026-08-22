@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
+import { withBasePath } from "@/lib/paths";
 import { getSupabase } from "./supabaseClient";
+import { decodeNavigateHeader } from "./tools";
 import type { Message } from "./types";
 
 const DEVICE_ID_KEY = "myAgent_device_id";
@@ -35,6 +38,7 @@ export interface UseChatReturn {
 }
 
 export function useChat(): UseChatReturn {
+  const router = useRouter();
   const { messages: copy } = usePreferences();
   const errors = copy.chat.errors;
   const [messages, setMessages] = useState<Message[]>([]);
@@ -233,6 +237,17 @@ export function useChat(): UseChatReturn {
 
       if (!response.body) {
         throw new Error(errors.network);
+      }
+
+      const navigate = decodeNavigateHeader(
+        response.headers.get("x-agent-navigate")
+      );
+      if (navigate) {
+        if (navigate.internal) {
+          router.push(navigate.href);
+        } else {
+          window.location.assign(withBasePath(navigate.href));
+        }
       }
 
       const reader = response.body.getReader();
