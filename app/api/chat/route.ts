@@ -75,22 +75,14 @@ export async function POST(req: NextRequest) {
 
     const { messages, conversationId } = body;
 
-    // 3. 保存用户消息（异步，不阻塞流）
-    if (conversationId) {
-      await getSupabaseAdmin().from("messages").insert({
-        conversation_id: conversationId,
-        role: "user",
-        content: messages[messages.length - 1].content,
-      });
-    }
-
-    // 4. 调用 LLM 流式接口
+    // 3. 调用 LLM 流式接口（用户消息由前端写入 messages 表，避免重复落库）
     const stream = await getOpenAI().chat.completions.create({
       model: process.env.LLM_MODEL || "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "你是用户的 AI 助手，基于已有知识简洁、专业地回答。",
+          content:
+            "你是蒋文喆个人网站上的 AI 助手。用简洁、友善的中文回答访客问题，可以介绍他的经历、项目与设计工程实践。不确定的信息不要编造。",
         },
         ...messages,
       ],
@@ -109,7 +101,7 @@ export async function POST(req: NextRequest) {
         }
         controller.close();
 
-        // 5. 流结束后保存助手回复
+        // 4. 流结束后保存助手回复
         if (conversationId) {
           await getSupabaseAdmin().from("messages").insert({
             conversation_id: conversationId,

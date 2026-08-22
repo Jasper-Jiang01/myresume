@@ -3,8 +3,6 @@ import { SiteFooter } from "./_components/SiteFooter";
 import { SiteHeader } from "./_components/SiteHeader";
 import projects from "./_content/projects";
 import { withBasePath } from "@/lib/paths";
-import { SiteDockNav } from "@/components/SiteDockNav";
-import { siteNavItems } from "@/lib/siteNav";
 import Link from "next/link";
 
 /**
@@ -15,9 +13,6 @@ import Link from "next/link";
 export default function MyCrafts() {
   return (
     <div className="relative z-10 min-h-screen">
-      {/* Dock 导航：站内共享的导航项配置，见 lib/siteNav.tsx */}
-      <SiteDockNav items={siteNavItems} />
-
       <SiteHeader />
 
       <main className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-4 pt-8 sm:grid-cols-2 sm:gap-6 sm:px-8 sm:pt-16 lg:grid-cols-3 lg:gap-8">

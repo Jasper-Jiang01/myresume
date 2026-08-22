@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display } from "next/font/google";
 import { SiteBackground } from "@/components/background/SiteBackground";
+import ChatWidget from "@/components/myAgent/ChatWidget";
 import "./globals.css";
 
 // 英文衬线展示字体，绑定为 --font-serif 供大标题（如 Portfolio）使用
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className={`${fontSerif.variable} relative font-sans antialiased`}>
         <SiteBackground />
         {children}
+        <ChatWidget />
       </body>
     </html>
   );
