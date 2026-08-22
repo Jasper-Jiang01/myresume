@@ -197,8 +197,17 @@ export function useChat(): UseChatReturn {
           "Content-Type": "application/json",
           "x-device-id": deviceId,
         },
-        body: JSON.stringify({ messages: history, conversationId }),
+        body: JSON.stringify({
+          messages: history,
+          conversationId,
+          nickname,
+        }),
       });
+
+      const convFromHeader = response.headers.get("x-conversation-id");
+      if (convFromHeader) {
+        localStorage.setItem(CONVERSATION_ID_KEY, convFromHeader);
+      }
 
       if (!response.ok) {
         const errBody = (await response.json().catch(() => ({}))) as {
@@ -206,6 +215,10 @@ export function useChat(): UseChatReturn {
         };
         if (response.status === 429) {
           throw new Error("今天聊得够多啦，明天再来吧 ☕");
+        }
+        if (response.status === 401) {
+          localStorage.removeItem(NICKNAME_KEY);
+          setNickname(null);
         }
         throw new Error(errBody.message || "文喆走神了，晚点再来试试吧…");
       }

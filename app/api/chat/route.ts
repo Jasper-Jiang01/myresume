@@ -56,7 +56,6 @@ function getSupabaseAdmin(): SupabaseClient {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. 设备身份校验
     const deviceId = req.headers.get("x-device-id");
     if (!deviceId) {
       return NextResponse.json(
@@ -65,28 +64,85 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: profile, error: profileErr } = await getSupabaseAdmin()
-      .from("profiles")
-      .select("id")
-      .eq("id", deviceId)
-      .single();
-
-    if (profileErr || !profile) {
-      return NextResponse.json(
-        { error: "auth_error", message: "登录状态已失效，请刷新后重试" },
-        { status: 401 }
-      );
-    }
-
-    // 2. 解析请求体
     const body = (await req.json()) as {
       messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
       conversationId?: string;
+      nickname?: string;
     };
 
-    const { messages, conversationId } = body;
+    const { messages, nickname } = body;
+    let { conversationId } = body;
 
-    // 3. 调用 LLM 流式接口（用户消息由前端写入 messages 表，避免重复落库）
+    const admin = getSupabaseAdmin();
+
+    // 1. 确保 profiles 中有该设备记录（昵称可能只存在于浏览器 localStorage）
+    const { data: profile, error: profileErr } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", deviceId)
+      .maybeSingle();
+
+    if (profileErr) {
+      const hint =
+        profileErr.code === "PGRST205" ||
+        profileErr.message?.includes("schema cache") ||
+        profileErr.message?.includes("does not exist")
+          ? "数据库表尚未创建。请在 Supabase SQL Editor 中执行 components/myAgent/README.md 里的建表语句。"
+          : `读取用户资料失败：${profileErr.message}`;
+      return NextResponse.json(
+        { error: "db_error", message: hint },
+        { status: 500 }
+      );
+    }
+
+    if (!profile) {
+      const trimmed = nickname?.trim() ?? "";
+      if (trimmed.length < 1 || trimmed.length > 20) {
+        return NextResponse.json(
+          { error: "auth_error", message: "登录状态已失效，请刷新后重试" },
+          { status: 401 }
+        );
+      }
+
+      const { error: insertErr } = await admin.from("profiles").insert({
+        id: deviceId,
+        nickname: trimmed,
+      });
+
+      if (insertErr) {
+        if (insertErr.code === "23505") {
+          return NextResponse.json(
+            { error: "auth_error", message: "该昵称已被使用" },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { error: "db_error", message: `创建个人信息失败：${insertErr.message}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (!conversationId) {
+      const { data: conv, error: convErr } = await admin
+        .from("conversations")
+        .insert({ profile_id: deviceId })
+        .select("id")
+        .single();
+
+      if (convErr || !conv) {
+        return NextResponse.json(
+          {
+            error: "db_error",
+            message: convErr?.message || "创建对话失败，请检查 conversations 表",
+          },
+          { status: 500 }
+        );
+      }
+      conversationId = conv.id as string;
+    }
+
+    // 2. 调用 LLM 流式接口
     const stream = await getOpenAI().chat.completions.create({
       model: process.env.LLM_MODEL || "gpt-4o-mini",
       messages: [
@@ -112,9 +168,9 @@ export async function POST(req: NextRequest) {
         }
         controller.close();
 
-        // 4. 流结束后保存助手回复
+        // 3. 流结束后保存助手回复
         if (conversationId) {
-          await getSupabaseAdmin().from("messages").insert({
+          await admin.from("messages").insert({
             conversation_id: conversationId,
             role: "assistant",
             content: fullContent,
@@ -127,6 +183,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
+        ...(conversationId ? { "x-conversation-id": conversationId } : {}),
       },
     });
   } catch (err) {
