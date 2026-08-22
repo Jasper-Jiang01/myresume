@@ -29,6 +29,17 @@ type BulletItemProps = {
   internal?: boolean;
 };
 
+/** 列表项左侧圆形圆点；颜色走 --dot-fill，避免 Tailwind 对 CSS 变量做 /opacity 失效 */
+export function ListDot() {
+  return (
+    <span
+      className="size-dot-md shrink-0 rounded-full"
+      style={{ backgroundColor: "var(--dot-fill)" }}
+      aria-hidden
+    />
+  );
+}
+
 export function BulletItem({ label, icon: customIcon, href, previewImage, newTab, internal }: BulletItemProps) {
   const icon = customIcon ? (
     <Image
@@ -39,7 +50,7 @@ export function BulletItem({ label, icon: customIcon, href, previewImage, newTab
       className="size-dot-md shrink-0"
     />
   ) : (
-    <span className="size-dot-md shrink-0 rounded-full bg-muted/30" />
+    <ListDot />
   );
 
   const textSpan = (

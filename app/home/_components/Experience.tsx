@@ -10,6 +10,7 @@
 "use client";
 
 import { useHomeContent } from "../_content/useHomeContent";
+import { ListDot } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 
 export function Experience() {
@@ -27,7 +28,7 @@ export function Experience() {
             className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <span className="size-dot-md shrink-0 rounded-full bg-muted/30" />
+              <ListDot />
               <span className="text-body text-muted">{item.role}</span>
             </div>
             <span className="shrink-0 pl-5 text-body text-muted sm:pl-0">
