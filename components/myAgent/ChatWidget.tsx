@@ -117,6 +117,7 @@ export default function ChatWidget() {
   } = useChat();
 
   const [focused, setFocused] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -124,9 +125,16 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming, isExpanded]);
 
-  const showHeader = Boolean(nickname) || isSubmittingNickname;
+  const showHeader =
+    hovered ||
+    focused ||
+    isExpanded ||
+    isSubmittingNickname ||
+    isStreaming ||
+    Boolean(error);
   const hasMessages = messages.length > 0;
-  const canSend = Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
+  const canSend =
+    Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
 
   const headerText = error
     ? error
@@ -156,10 +164,14 @@ export default function ChatWidget() {
       ? "h-[99px]"
       : "h-[48px]";
 
+  const isCompact = !showHeader;
+
   return (
     <section
       aria-label="和文喆聊天"
       className="fixed bottom-[48px] left-1/2 z-50 hidden origin-bottom -translate-x-1/2 md:block"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div
         className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[#1d1e2b1a] bg-white/80 font-sans shadow-[0_4px_36px_12px_rgba(29,30,43,0.1)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${showHeader ? "bg-[#161927]/[0.02]" : ""}`}
@@ -187,10 +199,12 @@ export default function ChatWidget() {
 
         {/* Body: messages + composer */}
         <div
-          className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[#1d1e2b1a] bg-white/80 px-3 py-3 transition-[height,border-radius] duration-[360ms] ${bodyHeightClass}`}
+          className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[#1d1e2b1a] bg-white/80 px-3 py-3 transition-[height,border-radius] duration-[360ms] ${
+            isCompact ? "justify-center" : ""
+          } ${bodyHeightClass}`}
           style={{ transitionTimingFunction: EASE }}
         >
-          {nickname && (
+          {nickname && showHeader && (
             <IconButton
               label={isExpanded ? "收起" : "展开"}
               disabled={isPinned && isExpanded}
@@ -246,8 +260,12 @@ export default function ChatWidget() {
             maxLength={nickname ? undefined : 20}
             rows={1}
             aria-label="输入你想对文喆说的话"
-            className={`w-full resize-none bg-transparent pb-6 pl-1 pr-7 text-[16px] leading-6 text-[#1d1e2bf2] outline-none placeholder:text-[#1d1e2b73] disabled:cursor-not-allowed ${
-              isExpanded && hasMessages ? "h-[72px] shrink-0" : "min-h-0 flex-1"
+            className={`w-full resize-none bg-transparent pl-1 pr-7 text-[16px] leading-6 text-[#1d1e2bf2] outline-none placeholder:text-[#1d1e2b73] disabled:cursor-not-allowed ${
+              isCompact
+                ? "h-6 shrink-0"
+                : isExpanded && hasMessages
+                  ? "h-[72px] shrink-0 pb-6"
+                  : "min-h-0 flex-1 pb-6"
             }`}
           />
 
@@ -276,7 +294,9 @@ export default function ChatWidget() {
             aria-label="发送"
             disabled={!canSend}
             onClick={sendMessage}
-            className="absolute bottom-3 right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-black/[0.03] p-1 text-[10px] text-[#1d1e2ba6] transition-colors hover:text-[#1d1e2bf2] disabled:opacity-35"
+            className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-black/[0.03] p-1 text-[10px] text-[#1d1e2ba6] transition-colors hover:text-[#1d1e2bf2] disabled:opacity-35 ${
+              isCompact ? "top-1/2 -translate-y-1/2" : "bottom-3"
+            }`}
           >
             <span className="inline-flex size-4 items-center justify-center opacity-80">
               <SendIcon />
