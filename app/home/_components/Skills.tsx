@@ -7,11 +7,14 @@
  *  - rows: string[][]，技能
  */
 
-import { skills } from "../_content/content";
+"use client";
+
+import { useHomeContent } from "../_content/useHomeContent";
 import { SectionCard } from "./SectionCard";
 
 /** Figma: Skills */
 export function Skills() {
+  const { skills } = useHomeContent();
   return (
     <SectionCard title={skills.title} icon="/assets/section-skills.svg" iconImageSize={19}>
       <div className="flex flex-col gap-2">
@@ -20,7 +23,7 @@ export function Skills() {
             {row.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center justify-center rounded-chip bg-[#F0F0F0] px-2 py-1 text-body text-muted"
+                className="inline-flex items-center justify-center rounded-chip bg-tag px-2 py-1 text-body text-muted"
               >
                 {skill}
               </span>

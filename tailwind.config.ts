@@ -6,6 +6,7 @@ import type { Config } from "tailwindcss";
  * - 字体栈：skills/web-font-family.md（系统 UI，西文→中文）
  */
 const config: Config = {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -15,13 +16,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        page: "#f7f7f7",
-        card: "#f5f5f5",
-        cardBorder: "#f0f0f0",
-        tag: "#F0F0F0",
-        primary: "#111111",
-        secondary: "#2c2c2c",
-        muted: "#737373",
+        page: "var(--bg)",
+        card: "var(--card)",
+        cardBorder: "var(--card-border)",
+        tag: "var(--tag)",
+        primary: "var(--text-primary)",
+        secondary: "var(--text-secondary)",
+        muted: "var(--text-muted)",
+        surface: "var(--surface)",
+        press: "var(--press)",
+        stroke: "var(--stroke)",
       },
       fontFamily: {
         sans: [

@@ -8,10 +8,13 @@
  *  - passionLabel: string，兴趣爱好标签
  *  - passions: string，兴趣爱好
  */
-import { aboutMe } from "../_content/content";
+"use client";
+
+import { useHomeContent } from "../_content/useHomeContent";
 import { SectionCard } from "./SectionCard";
 
 export function AboutMe() {
+  const { aboutMe } = useHomeContent();
   return (
     <SectionCard
       title={aboutMe.title}

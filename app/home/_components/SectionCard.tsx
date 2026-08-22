@@ -39,11 +39,11 @@ export function SectionCard({
 
   return (
     <section
-      className={`flex h-full min-h-0 flex-col rounded-card border border-[#DDDDDD] bg-[#f5f5f5]/70 p-4 backdrop-blur-sm sm:p-6 ${className}`}
+      className={`flex h-full min-h-0 flex-col rounded-card border border-cardBorder bg-[var(--card-glass)] p-4 backdrop-blur-sm sm:p-6 ${className}`}
     >
       <div className="mb-4 flex flex-col gap-2">
         <div
-          className={`flex items-center justify-center border border-solid border-cardBorder bg-white shadow-sm ${frameClass}`}
+          className={`flex items-center justify-center border border-solid border-cardBorder bg-surface shadow-sm ${frameClass}`}
         >
           {icon ? (
             <Image
@@ -52,11 +52,11 @@ export function SectionCard({
               width={iconImageSize}
               height={iconImageSize}
               style={{ width: iconImageSize, height: iconImageSize }}
-              className="object-contain"
+              className="object-contain dark:invert"
             />
           ) : null}
         </div>
-        <h2 className="text-title font-medium text-black">{title}</h2>
+        <h2 className="text-title font-medium text-primary">{title}</h2>
       </div>
       {children}
     </section>

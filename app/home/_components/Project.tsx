@@ -6,11 +6,14 @@
  *  - title: string，标题
  *  - items: string[]，作品
  */
-import { project } from "../_content/content";
+"use client";
+
+import { useHomeContent } from "../_content/useHomeContent";
 import { BulletItem } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 
 export function Project() {
+  const { project } = useHomeContent();
   return (
     <SectionCard title={project.title} icon="/assets/section-project.svg">
       <ul className="flex flex-col gap-2">

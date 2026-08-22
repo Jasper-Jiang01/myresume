@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { useChat } from "./useChat";
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -90,7 +91,7 @@ function IconButton({
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex size-fit items-center justify-center rounded-[6px] p-1 text-[10px] text-[#1d1e2ba6] transition-colors hover:bg-black/[0.03] hover:text-[#1d1e2bf2] disabled:pointer-events-none disabled:opacity-35 ${className}`}
+      className={`inline-flex size-fit items-center justify-center rounded-[6px] p-1 text-[10px] text-[var(--chat-text-muted)] transition-colors hover:bg-black/[0.03] hover:text-[var(--chat-text)] disabled:pointer-events-none disabled:opacity-35 dark:hover:bg-white/[0.06] ${className}`}
     >
       <span className="inline-flex size-4 items-center justify-center opacity-80">
         {children}
@@ -100,6 +101,7 @@ function IconButton({
 }
 
 export default function ChatWidget() {
+  const { messages: copy } = usePreferences();
   const {
     messages,
     input,
@@ -139,18 +141,18 @@ export default function ChatWidget() {
   const headerText = error
     ? error
     : isSubmittingNickname
-      ? "正在记录昵称…"
+      ? copy.chat.savingNickname
       : isStreaming
-        ? "正在回复…"
+        ? copy.chat.replying
         : nickname
-          ? "和文喆的小助手聊天"
-          : "取个昵称再开始吧";
+          ? copy.chat.chatting
+          : copy.chat.askNickname;
 
   const placeholder = !nickname
     ? focused || input
-      ? "1~20个字符, 账号基于访问设备记录哦…"
-      : "Ask me anything…"
-    : "Ask me anything…";
+      ? copy.chat.nicknameHint
+      : copy.chat.askAnything
+    : copy.chat.askAnything;
 
   const widthClass = isExpanded
     ? "w-[560px]"
@@ -168,13 +170,13 @@ export default function ChatWidget() {
 
   return (
     <section
-      aria-label="和文喆聊天"
+      aria-label={copy.chat.region}
       className="fixed bottom-[48px] left-1/2 z-50 hidden origin-bottom -translate-x-1/2 md:block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[#1d1e2b1a] bg-white/80 font-sans shadow-[0_4px_36px_12px_rgba(29,30,43,0.1)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${showHeader ? "bg-[#161927]/[0.02]" : ""}`}
+        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${showHeader ? "bg-[var(--chat-bg-active)]" : ""}`}
         style={{ transitionTimingFunction: EASE }}
       >
         {/* Header — CSS grid 0fr/1fr 做展开收起 */}
@@ -186,7 +188,7 @@ export default function ChatWidget() {
           }}
         >
           <div className="min-h-0 overflow-hidden">
-            <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[#1d1e2bd9]">
+            <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)]">
               <p
                 className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
                 aria-live="polite"
@@ -199,14 +201,14 @@ export default function ChatWidget() {
 
         {/* Body: messages + composer */}
         <div
-          className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[#1d1e2b1a] bg-white/80 px-3 py-3 transition-[height,border-radius] duration-[360ms] ${
+          className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[var(--chat-border)] bg-[var(--chat-bg)] px-3 py-3 transition-[height,border-radius] duration-[360ms] ${
             isCompact ? "justify-center" : ""
           } ${bodyHeightClass}`}
           style={{ transitionTimingFunction: EASE }}
         >
           {nickname && showHeader && (
             <IconButton
-              label={isExpanded ? "收起" : "展开"}
+              label={isExpanded ? copy.chat.collapse : copy.chat.expand}
               disabled={isPinned && isExpanded}
               onClick={() => setIsExpanded(!isExpanded)}
               className="absolute right-3 top-3 z-10"
@@ -226,13 +228,13 @@ export default function ChatWidget() {
                     <div
                       className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
                         msg.role === "user"
-                          ? "bg-[#1d1e2bf2] text-white"
-                          : "bg-white/70 text-[#1d1e2bf2] shadow-sm"
+                          ? "bg-[var(--chat-user-bg)] text-[var(--chat-user-fg)]"
+                          : "bg-[var(--chat-assistant-bg)] text-[var(--chat-text)] shadow-sm"
                       }`}
                     >
                       {msg.content || (
-                        <span className="inline-flex animate-pulse text-[#1d1e2b73]">
-                          {isStreaming ? "文喆正在思考中" : "…"}
+                        <span className="inline-flex animate-pulse text-[var(--chat-placeholder)]">
+                          {isStreaming ? copy.chat.thinking : "…"}
                         </span>
                       )}
                     </div>
@@ -259,8 +261,8 @@ export default function ChatWidget() {
             disabled={isSubmittingNickname || isStreaming}
             maxLength={nickname ? undefined : 20}
             rows={1}
-            aria-label="输入你想对文喆说的话"
-            className={`w-full resize-none bg-transparent pl-1 pr-7 text-[16px] leading-6 text-[#1d1e2bf2] outline-none placeholder:text-[#1d1e2b73] disabled:cursor-not-allowed ${
+            aria-label={copy.chat.inputLabel}
+            className={`w-full resize-none bg-transparent pl-1 pr-7 text-[16px] leading-6 text-[var(--chat-text)] outline-none placeholder:text-[var(--chat-placeholder)] disabled:cursor-not-allowed ${
               isCompact
                 ? "h-6 shrink-0"
                 : isExpanded && hasMessages
@@ -277,24 +279,24 @@ export default function ChatWidget() {
             }`}
           >
             <IconButton
-              label="常驻展开"
+              label={copy.chat.pin}
               pressed={isPinned}
               onClick={() => setIsPinned(!isPinned)}
-              className={isPinned ? "text-[#1d1e2bf2]" : ""}
+              className={isPinned ? "text-[var(--chat-text)]" : ""}
             >
               <PinIcon />
             </IconButton>
-            <IconButton label="开始新对话" onClick={startNewConversation}>
+            <IconButton label={copy.chat.newChat} onClick={startNewConversation}>
               <NewChatIcon />
             </IconButton>
           </div>
 
           <button
             type="button"
-            aria-label="发送"
+            aria-label={copy.chat.send}
             disabled={!canSend}
             onClick={sendMessage}
-            className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-black/[0.03] p-1 text-[10px] text-[#1d1e2ba6] transition-colors hover:text-[#1d1e2bf2] disabled:opacity-35 ${
+            className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-[var(--chat-btn)] p-1 text-[10px] text-[var(--chat-text-muted)] transition-colors hover:text-[var(--chat-text)] disabled:opacity-35 ${
               isCompact ? "top-1/2 -translate-y-1/2" : "bottom-3"
             }`}
           >

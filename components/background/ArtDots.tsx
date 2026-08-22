@@ -63,10 +63,15 @@ export default function ArtDots() {
       }
     };
 
+    const palette = () =>
+      document.documentElement.classList.contains("dark")
+        ? { bg: "#121318", stroke: [140, 140, 150] as const }
+        : { bg: "#ffffff", stroke: [200, 200, 200] as const };
+
     const setup = () => {
       const { w, h } = sizeRef.current;
       createCanvas(w, h);
-      background("#ffffff");
+      background(palette().bg);
       stroke("#ccc");
       noFill();
       noiseSeed(+new Date());
@@ -78,7 +83,8 @@ export default function ArtDots() {
     }: {
       circle: (x: number, y: number, d: number) => void;
     }) => {
-      background("#ffffff");
+      const { bg, stroke: strokeRgb } = palette();
+      background(bg);
       // 固定时间参数 → noise 输出恒定，画面静止不再持续变化
       const t = prefersReducedMotion ? 0 : +new Date() / 10000;
       const offsetY = offsetYRef.current;
@@ -90,9 +96,9 @@ export default function ArtDots() {
         const nx = x + cos(rad) * length;
         const ny = y + sin(rad) * length;
         stroke(
-          200,
-          200,
-          200,
+          strokeRgb[0],
+          strokeRgb[1],
+          strokeRgb[2],
           (Math.abs(cos(rad)) * 0.8 + 0.2) * p.opacity * 255,
         );
         circle(nx, ny - offsetY, 1);

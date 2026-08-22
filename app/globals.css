@@ -5,13 +5,32 @@
 :root {
   --bg: #f5f5f5;
   --card: #f5f5f5;
-  --cardBorder: #f0f0f0;
-  --tag: #e9e9e9;
+  --card-glass: rgba(245, 245, 245, 0.7);
+  --card-border: #dddddd;
+  --tag: #f0f0f0;
   --text-primary: #111111;
   --text-secondary: #2c2c2c;
   --text-muted: #737373;
   --text-black: #000000;
+  --surface: #ffffff;
+  --press: rgba(29, 30, 43, 0.05);
+  --stroke: rgba(29, 30, 43, 0.15);
+  --btn-bg: #111111;
+  --btn-fg: #ffffff;
   --icon-placeholder: #f7f7f7;
+  --dots-bg: #ffffff;
+  --chat-bg: rgba(255, 255, 255, 0.8);
+  --chat-bg-active: rgba(22, 25, 39, 0.02);
+  --chat-border: rgba(29, 30, 43, 0.1);
+  --chat-text: rgba(29, 30, 43, 0.95);
+  --chat-text-secondary: rgba(29, 30, 43, 0.85);
+  --chat-text-muted: rgba(29, 30, 43, 0.65);
+  --chat-placeholder: rgba(29, 30, 43, 0.45);
+  --chat-user-bg: rgba(29, 30, 43, 0.95);
+  --chat-user-fg: #ffffff;
+  --chat-assistant-bg: rgba(255, 255, 255, 0.7);
+  --chat-btn: rgba(0, 0, 0, 0.03);
+  --chat-shadow: 0 4px 36px 12px rgba(29, 30, 43, 0.1);
   /* 系统 UI 字体栈：西文 → 中文 → sans-serif（skills/web-font-family.md） */
   --font-sans:
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
@@ -21,12 +40,100 @@
      用于大标题强调（如 Portfolio），此处不再静态声明，避免覆盖字体度量变量 */
 }
 
+.dark {
+  --bg: #121318;
+  --card: #1c1d24;
+  --card-glass: rgba(28, 29, 36, 0.72);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --tag: rgba(255, 255, 255, 0.08);
+  --text-primary: #f2f2f2;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
+  --text-black: #f5f5f5;
+  --surface: #23242c;
+  --press: rgba(255, 255, 255, 0.08);
+  --stroke: rgba(255, 255, 255, 0.18);
+  --btn-bg: #f2f2f2;
+  --btn-fg: #111111;
+  --icon-placeholder: #2a2b33;
+  --dots-bg: #121318;
+  --chat-bg: rgba(28, 29, 36, 0.82);
+  --chat-bg-active: rgba(255, 255, 255, 0.04);
+  --chat-border: rgba(255, 255, 255, 0.14);
+  --chat-text: rgba(255, 255, 255, 0.95);
+  --chat-text-secondary: rgba(255, 255, 255, 0.85);
+  --chat-text-muted: rgba(255, 255, 255, 0.55);
+  --chat-placeholder: rgba(255, 255, 255, 0.4);
+  --chat-user-bg: rgba(245, 245, 245, 0.95);
+  --chat-user-fg: #121318;
+  --chat-assistant-bg: rgba(255, 255, 255, 0.08);
+  --chat-btn: rgba(255, 255, 255, 0.08);
+  --chat-shadow: 0 4px 36px 12px rgba(0, 0, 0, 0.35);
+}
+
 /*
  * Web 适配：根字号锚定，禁止用 @media / clamp 修改 html font-size
  * 字号走 rem token；布局用 sm: 断点重排（见 skills/web-fontsize-adaptation.md）
  */
 html {
   font-size: 18px; /* 1rem = 16px，全站基准 */
+  color-scheme: light;
+  background: var(--bg);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+.theme-fade-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.theme-fading .theme-fade-overlay {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-fade-overlay {
+    transition: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+::view-transition-old(root) {
+  animation: theme-fade-out 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: theme-fade-in 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes theme-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 html,

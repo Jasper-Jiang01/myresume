@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { usePreferences } from "@/components/preferences/PreferencesProvider";
 
 /**
  * 路由段错误边界
@@ -16,6 +17,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { messages } = usePreferences();
+
   useEffect(() => {
     // 上报到日志系统时可在此处接入；目前先打印到控制台便于排查
     console.error(error);
@@ -24,23 +27,25 @@ export default function Error({
   return (
     <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-16">
       <div className="flex flex-col items-center gap-4 text-center sm:gap-6">
-        <span className="text-5xl font-bold text-primary sm:text-6xl">出错了</span>
-        <h1 className="text-title font-medium text-primary">页面出现了一点问题</h1>
-        <p className="max-w-sm text-body text-muted">
-          抱歉，页面渲染时发生了意外错误，请重试或返回首页。
-        </p>
+        <span className="text-5xl font-bold text-primary sm:text-6xl">
+          {messages.error.kicker}
+        </span>
+        <h1 className="text-title font-medium text-primary">
+          {messages.error.title}
+        </h1>
+        <p className="max-w-sm text-body text-muted">{messages.error.body}</p>
         <div className="mt-2 flex items-center gap-3">
           <button
             onClick={reset}
-            className="rounded-chip bg-primary px-5 py-2 text-body text-white transition-opacity hover:opacity-80"
+            className="rounded-chip bg-[var(--btn-bg)] px-5 py-2 text-body text-[var(--btn-fg)] transition-opacity hover:opacity-80"
           >
-            重试
+            {messages.error.retry}
           </button>
           <Link
             href="/home"
-            className="rounded-chip border border-[#DDDDDD] px-5 py-2 text-body text-muted no-underline transition-colors hover:text-primary"
+            className="rounded-chip border border-cardBorder px-5 py-2 text-body text-muted no-underline transition-colors hover:text-primary"
           >
-            返回首页
+            {messages.error.back}
           </Link>
         </div>
       </div>

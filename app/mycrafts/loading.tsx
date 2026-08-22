@@ -57,7 +57,7 @@ export default function Loading() {
       </div>
 
       {/* 进度线 */}
-      <div className="h-px w-48 overflow-hidden bg-[#DDDDDD] sm:w-64">
+      <div className="h-px w-48 overflow-hidden bg-cardBorder sm:w-64">
         <div
           className="h-full bg-primary transition-all duration-100 ease-out"
           style={{ width: `${progress}%` }}

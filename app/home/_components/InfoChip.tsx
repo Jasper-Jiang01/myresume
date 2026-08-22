@@ -27,7 +27,7 @@ export function InfoChip({
   labelClassName = "text-body",
 }: InfoChipProps) {
   return (
-    <div className="inline-flex items-center justify-center rounded-chip border border-[#DDDDDD] bg-[#F5F5F5] px-2.5 py-2 shadow-none backdrop-blur-sm">
+    <div className="inline-flex items-center justify-center rounded-chip border border-cardBorder bg-[var(--card-glass)] px-2.5 py-2 shadow-none backdrop-blur-sm">
       <div className="flex items-center gap-1">
         <Image
           src={withBasePath(icon)}

@@ -1,9 +1,12 @@
+"use client";
+
 import Image from "next/image";
 import { InfoChip } from "./InfoChip";
-import { profile } from "../_content/content";
 import { withBasePath } from "@/lib/paths";
+import { useHomeContent } from "../_content/useHomeContent";
 
 export function ProfileHeader() {
+  const { profile } = useHomeContent();
   return (
     <header className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
       <div className="mt-8 flex min-w-0 flex-1 flex-col items-start gap-2 sm:mt-12 sm:gap-3">
@@ -27,7 +30,7 @@ export function ProfileHeader() {
       </div>
      
       <div className="relative mt-10 size-[120px] shrink-0 hidden sm:block">
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-full bg-white">
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-full bg-surface">
           {/* 头像 */}
             <Image
             src={withBasePath(profile.avatar)}

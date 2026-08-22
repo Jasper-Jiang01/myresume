@@ -7,12 +7,13 @@
  *  - items: { role: string, period: string }[]，工作经历
  */
 
-import Image from "next/image";
-import { experience } from "../_content/content";
-import { withBasePath } from "@/lib/paths";
+"use client";
+
+import { useHomeContent } from "../_content/useHomeContent";
 import { SectionCard } from "./SectionCard";
 
 export function Experience() {
+  const { experience } = useHomeContent();
   return (
     <SectionCard
       title={experience.title}
@@ -26,13 +27,7 @@ export function Experience() {
             className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <Image
-                src={withBasePath("/images/list-dot.svg")}
-                alt=""
-                width={14}
-                height={14}
-                className="size-dot-md shrink-0"
-              />
+              <span className="size-dot-md shrink-0 rounded-full bg-muted/30" />
               <span className="text-body text-muted">{item.role}</span>
             </div>
             <span className="shrink-0 pl-5 text-body text-muted sm:pl-0">

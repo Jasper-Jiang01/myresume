@@ -7,12 +7,15 @@
  *  - items: string[]，工具
  */
 
-import { tools } from "../_content/content";
+"use client";
+
+import { useHomeContent } from "../_content/useHomeContent";
 import { BulletItem } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 
 /** Figma: Tools */
 export function Tools() {
+  const { tools } = useHomeContent();
   return (
     <SectionCard title={tools.title} icon="/assets/section-tools.svg" iconImageSize={18}>
       <ul className="flex flex-col gap-2">

@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Playfair_Display } from "next/font/google";
 import { SiteBackground } from "@/components/background/SiteBackground";
 import ChatWidget from "@/components/myAgent/ChatWidget";
+import { PreferenceToggles } from "@/components/preferences/PreferenceToggles";
+import { PreferencesProvider } from "@/components/preferences/PreferencesProvider";
+import { PREFERENCES_BOOTSTRAP_SCRIPT } from "@/lib/preferences/apply";
 import "./globals.css";
 
 // 英文衬线展示字体，绑定为 --font-serif 供大标题（如 Portfolio）使用
@@ -30,11 +34,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <body className={`${fontSerif.variable} relative font-sans antialiased`}>
-        <SiteBackground />
-        {children}
-        <ChatWidget />
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body
+        className={`${fontSerif.variable} relative font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <Script
+          id="preferences-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOTSTRAP_SCRIPT }}
+        />
+        <PreferencesProvider>
+          <SiteBackground />
+          {children}
+          <ChatWidget />
+          <div className="theme-fade-overlay" aria-hidden />
+          <PreferenceToggles />
+        </PreferencesProvider>
       </body>
     </html>
   );

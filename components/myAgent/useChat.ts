@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { getSupabase } from "./supabaseClient";
 import type { Message } from "./types";
 
@@ -34,6 +35,8 @@ export interface UseChatReturn {
 }
 
 export function useChat(): UseChatReturn {
+  const { messages: copy } = usePreferences();
+  const errors = copy.chat.errors;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -65,7 +68,7 @@ export function useChat(): UseChatReturn {
       .order("created_at", { ascending: true });
 
     if (dbError) {
-      setError("加载历史记录失败");
+      setError(errors.history);
       return;
     }
 
@@ -79,7 +82,7 @@ export function useChat(): UseChatReturn {
         }))
       );
     }
-  }, []);
+  }, [errors.history]);
 
   useEffect(() => {
     if (nickname) loadHistory();
@@ -88,11 +91,11 @@ export function useChat(): UseChatReturn {
   const submitNickname = async (name: string) => {
     const trimmed = name.trim();
     if (trimmed.length < 1 || trimmed.length > 20) {
-      throw new Error("昵称需要 1-20 个字符");
+      throw new Error(errors.nicknameLength);
     }
 
     const deviceId = deviceIdRef.current;
-    if (!deviceId) throw new Error("设备 ID 初始化失败");
+    if (!deviceId) throw new Error(errors.device);
 
     const supabase = getSupabase();
     if (supabase) {
@@ -103,7 +106,7 @@ export function useChat(): UseChatReturn {
         .maybeSingle();
 
       if (existing) {
-        throw new Error("该昵称已被使用");
+        throw new Error(errors.nicknameTaken);
       }
 
       const { error: insertErr } = await supabase
@@ -112,9 +115,9 @@ export function useChat(): UseChatReturn {
 
       if (insertErr) {
         if (insertErr.code === "23505") {
-          throw new Error("该昵称已被使用");
+          throw new Error(errors.nicknameTaken);
         }
-        throw new Error("创建个人信息失败");
+        throw new Error(errors.profile);
       }
     }
 
@@ -138,7 +141,7 @@ export function useChat(): UseChatReturn {
         await submitNickname(input);
         setInput("");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "创建个人信息失败");
+        setError(err instanceof Error ? err.message : errors.profile);
       } finally {
         setIsSubmittingNickname(false);
       }
@@ -174,7 +177,7 @@ export function useChat(): UseChatReturn {
           .single();
 
         if (convErr || !convData) {
-          throw new Error("创建对话超时，请检查 Supabase 连接后重试");
+          throw new Error(errors.convTimeout);
         }
         conversationId = convData.id as string;
         localStorage.setItem(CONVERSATION_ID_KEY, conversationId);
@@ -187,7 +190,7 @@ export function useChat(): UseChatReturn {
           content: userMessage.content,
         });
         if (saveErr) {
-          throw new Error("消息保存失败，请重试");
+          throw new Error(errors.save);
         }
       }
 
@@ -219,17 +222,17 @@ export function useChat(): UseChatReturn {
           message?: string;
         };
         if (response.status === 429) {
-          throw new Error("今天聊得够多啦，明天再来吧 ☕");
+          throw new Error(errors.rateLimit);
         }
         if (response.status === 401) {
           localStorage.removeItem(NICKNAME_KEY);
           setNickname(null);
         }
-        throw new Error(errBody.message || "文喆走神了，晚点再来试试吧…");
+        throw new Error(errBody.message || errors.distracted);
       }
 
       if (!response.body) {
-        throw new Error("网络连接中断，请检查网络后重试");
+        throw new Error(errors.network);
       }
 
       const reader = response.body.getReader();
@@ -254,7 +257,7 @@ export function useChat(): UseChatReturn {
         prev.filter((m) => !(m.id === assistantId && !m.content))
       );
       setError(
-        err instanceof Error ? err.message : "文喆走神了，晚点再来试试吧…"
+        err instanceof Error ? err.message : errors.distracted
       );
     } finally {
       setIsStreaming(false);

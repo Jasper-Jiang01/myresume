@@ -36,7 +36,7 @@ function ImagePlaceholder({ label, className = "" }: { label?: string; className
     <div
       className={`flex aspect-video w-full items-center justify-center rounded-2xl border border-dashed border-cardBorder bg-card text-body text-muted ${className}`}
     >
-      {label ?? "图片占位"}
+      {label ?? "Image"}
     </div>
   );
 }
@@ -69,7 +69,7 @@ export function ProjectCard({
             />
           </div>
         ) : (
-          <ImagePlaceholder label="封面图占位" className="transition-transform duration-500 ease-expo-out hover:-translate-y-0.5 hover:scale-[1.03]" />
+          <ImagePlaceholder className="transition-transform duration-500 ease-expo-out hover:-translate-y-0.5 hover:scale-[1.03]" />
         )}
       </div>
 

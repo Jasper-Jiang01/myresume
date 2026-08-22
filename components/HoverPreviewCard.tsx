@@ -216,14 +216,14 @@ export function HoverPreviewCard({
               transformOrigin: "50% 100%",
             }}
           >
-            <div className="flex items-center justify-center bg-white p-0">
+            <div className="flex items-center justify-center bg-surface p-0">
               {previewImage && (
                 <Image
                   src={withBasePath(previewImage)}
                   alt={previewTitle}
                   width={220}
                   height={160}
-                  className="rounded-lg border border-[#EEEEEE]"
+                  className="rounded-lg border border-cardBorder"
                   unoptimized
                 />
               )}

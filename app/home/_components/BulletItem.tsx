@@ -39,13 +39,7 @@ export function BulletItem({ label, icon: customIcon, href, previewImage, newTab
       className="size-dot-md shrink-0"
     />
   ) : (
-    <Image
-      src={withBasePath("/images/list-dot.svg")}
-      alt=""
-      width={14}
-      height={14}
-      className="size-dot-md shrink-0"
-    />
+    <span className="size-dot-md shrink-0 rounded-full bg-muted/30" />
   );
 
   const textSpan = (
