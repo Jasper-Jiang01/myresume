@@ -10,6 +10,13 @@ const DEVICE_ID_KEY = "myAgent_device_id";
 const NICKNAME_KEY = "myAgent_nickname";
 const CONVERSATION_ID_KEY = "myAgent_conversation_id";
 
+function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof DOMException || err instanceof Error) &&
+    err.name === "AbortError"
+  );
+}
+
 function getDeviceId(): string {
   if (typeof window === "undefined") return "";
   let id = localStorage.getItem(DEVICE_ID_KEY);
@@ -39,7 +46,7 @@ export interface UseChatReturn {
 
 export function useChat(): UseChatReturn {
   const router = useRouter();
-  const { messages: copy } = usePreferences();
+  const { messages: copy, locale } = usePreferences();
   const errors = copy.chat.errors;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -51,12 +58,16 @@ export function useChat(): UseChatReturn {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const deviceIdRef = useRef<string>("");
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     deviceIdRef.current = getDeviceId();
     const storedNick = localStorage.getItem(NICKNAME_KEY);
     if (storedNick) setNickname(storedNick);
     setHydrated(true);
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   const loadHistory = useCallback(async () => {
@@ -130,9 +141,12 @@ export function useChat(): UseChatReturn {
   };
 
   const startNewConversation = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     localStorage.removeItem(CONVERSATION_ID_KEY);
     setMessages([]);
     setError(null);
+    setIsStreaming(false);
   }, []);
 
   const sendMessage = async () => {
@@ -169,55 +183,42 @@ export function useChat(): UseChatReturn {
     setIsExpanded(true);
 
     const deviceId = deviceIdRef.current;
-    const supabase = getSupabase();
-    let conversationId = localStorage.getItem(CONVERSATION_ID_KEY);
+    const conversationId = localStorage.getItem(CONVERSATION_ID_KEY);
+    let userPersisted = false;
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
+    let raf = 0;
+    let assistantContent = "";
+
+    const flushAssistant = () => {
+      raf = 0;
+      const snapshot = assistantContent;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, content: snapshot } : m
+        )
+      );
+    };
 
     try {
-      if (supabase && !conversationId) {
-        const { data: convData, error: convErr } = await supabase
-          .from("conversations")
-          .insert({ profile_id: deviceId })
-          .select("id")
-          .single();
-
-        if (convErr || !convData) {
-          throw new Error(errors.convTimeout);
-        }
-        conversationId = convData.id as string;
-        localStorage.setItem(CONVERSATION_ID_KEY, conversationId);
-      }
-
-      if (supabase && conversationId) {
-        const { error: saveErr } = await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          role: "user",
-          content: userMessage.content,
-        });
-        if (saveErr) {
-          throw new Error(errors.save);
-        }
-      }
-
-      const history = [...messages, userMessage].map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-device-id": deviceId,
         },
+        signal: abort.signal,
         body: JSON.stringify({
-          messages: history,
-          conversationId,
+          content: userMessage.content,
+          conversationId: conversationId || undefined,
           nickname,
+          locale,
         }),
       });
 
       const convFromHeader = response.headers.get("x-conversation-id");
-      if (convFromHeader) {
+      if (convFromHeader && !abort.signal.aborted) {
         localStorage.setItem(CONVERSATION_ID_KEY, convFromHeader);
       }
 
@@ -232,47 +233,66 @@ export function useChat(): UseChatReturn {
           localStorage.removeItem(NICKNAME_KEY);
           setNickname(null);
         }
+        if (response.status === 403) {
+          localStorage.removeItem(CONVERSATION_ID_KEY);
+        }
         throw new Error(errBody.message || errors.distracted);
       }
+
+      userPersisted = true;
 
       if (!response.body) {
         throw new Error(errors.network);
       }
 
-      let assistantContent = "";
-      await readAgentStream(response.body, (event) => {
-        if (event.type === "token") {
-          assistantContent += event.text;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: assistantContent } : m
-            )
-          );
-          return;
-        }
-        if (event.type === "navigate") {
-          if (event.internal) {
-            router.push(event.href);
-          } else {
-            window.location.assign(withBasePath(event.href));
+      await readAgentStream(
+        response.body,
+        (event) => {
+          if (event.type === "token") {
+            assistantContent += event.text;
+            if (!raf) raf = requestAnimationFrame(flushAssistant);
+            return;
           }
-          return;
-        }
-        if (event.type === "error") {
-          throw new Error(event.message || errors.distracted);
-        }
-      });
+          if (event.type === "navigate") {
+            if (event.internal) {
+              router.push(event.href);
+            } else {
+              window.location.assign(withBasePath(event.href));
+            }
+            return;
+          }
+          if (event.type === "error") {
+            throw new Error(event.message || errors.distracted);
+          }
+        },
+        abort.signal
+      );
 
-      // Assistant 消息由 /api/chat 在流结束后写入，避免前后端重复落库。
+      if (raf) cancelAnimationFrame(raf);
+      if (assistantContent) flushAssistant();
+
+      // user / assistant 均由 /api/chat 写入，前端只做乐观展示。
     } catch (err) {
+      if (raf) cancelAnimationFrame(raf);
+      if (isAbortError(err) || abort.signal.aborted) {
+        return;
+      }
+      if (assistantContent) flushAssistant();
       setMessages((prev) =>
-        prev.filter((m) => !(m.id === assistantId && !m.content))
+        prev.filter((m) => {
+          if (m.id === assistantId && !m.content) return false;
+          if (!userPersisted && m.id === userMessage.id) return false;
+          return true;
+        })
       );
       setError(
         err instanceof Error ? err.message : errors.distracted
       );
     } finally {
-      setIsStreaming(false);
+      if (abortRef.current === abort) {
+        abortRef.current = null;
+        setIsStreaming(false);
+      }
     }
   };
 

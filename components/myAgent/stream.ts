@@ -2,7 +2,7 @@ import type {
   ChatCompletionChunk,
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
-import type { AgentNavigateAction } from "./tools";
+import { resolveAllowedNavigate, type AgentNavigateAction } from "./tools";
 
 export type AgentStreamEvent =
   | { type: "token"; text: string }
@@ -43,19 +43,47 @@ function parseAgentStreamBlock(block: string): AgentStreamEvent | null {
   if (!json || json === "[DONE]") return null;
 
   try {
-    const parsed = JSON.parse(json) as AgentStreamEvent;
-    if (!parsed || typeof parsed !== "object" || !("type" in parsed)) {
-      return null;
-    }
-    return parsed;
+    return parseAgentStreamEvent(JSON.parse(json));
   } catch {
     return null;
   }
 }
 
+export function parseAgentStreamEvent(value: unknown): AgentStreamEvent | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as { type?: unknown };
+
+  if (record.type === "token") {
+    const text = (value as { text?: unknown }).text;
+    return typeof text === "string" && text ? { type: "token", text } : null;
+  }
+
+  if (record.type === "navigate") {
+    const navigate = resolveAllowedNavigate(
+      (value as { href?: unknown }).href,
+      (value as { internal?: unknown }).internal
+    );
+    return navigate ? { type: "navigate", ...navigate } : null;
+  }
+
+  if (record.type === "error") {
+    const message = (value as { message?: unknown }).message;
+    return typeof message === "string" && message
+      ? { type: "error", message }
+      : null;
+  }
+
+  if (record.type === "done") {
+    return { type: "done" };
+  }
+
+  return null;
+}
+
 export async function readAgentStream(
   body: ReadableStream<Uint8Array>,
-  onEvent: (event: AgentStreamEvent) => void
+  onEvent: (event: AgentStreamEvent) => void,
+  signal?: AbortSignal
 ): Promise<void> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -68,9 +96,29 @@ export async function readAgentStream(
     if (event) onEvent(event);
   };
 
+  const cancel = () => {
+    reader.cancel().catch(() => {
+      /* already closed */
+    });
+  };
+
+  if (signal?.aborted) {
+    cancel();
+    reader.releaseLock();
+    return;
+  }
+
+  signal?.addEventListener("abort", cancel, { once: true });
+
   try {
-    while (true) {
-      const { done, value } = await reader.read();
+    while (!signal?.aborted) {
+      let chunk: ReadableStreamReadResult<Uint8Array>;
+      try {
+        chunk = await reader.read();
+      } catch {
+        break;
+      }
+      const { done, value } = chunk;
       if (done) break;
       buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
       const parts = buffer.split("\n\n");
@@ -78,9 +126,14 @@ export async function readAgentStream(
       for (const part of parts) flushBlock(part);
     }
     buffer += decoder.decode().replace(/\r\n/g, "\n");
-    if (buffer.trim()) flushBlock(buffer);
+    if (buffer.trim() && !signal?.aborted) flushBlock(buffer);
   } finally {
-    reader.releaseLock();
+    signal?.removeEventListener("abort", cancel);
+    try {
+      reader.releaseLock();
+    } catch {
+      /* lock already released after cancel */
+    }
   }
 }
 

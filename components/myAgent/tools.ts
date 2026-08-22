@@ -131,6 +131,18 @@ export type AgentNavigateAction = {
   internal: boolean;
 };
 
+export function resolveAllowedNavigate(
+  href: unknown,
+  internal: unknown
+): AgentNavigateAction | null {
+  if (typeof href !== "string" || typeof internal !== "boolean") return null;
+  if (!href.startsWith("/") || href.startsWith("//")) return null;
+  const found = PROJECT_LINKS.find(
+    (item) => item.href === href && item.internal === internal
+  );
+  return found ? { href: found.href, internal: found.internal } : null;
+}
+
 function parseOpenProjectId(args: unknown): string | null {
   if (typeof args === "string") {
     try {

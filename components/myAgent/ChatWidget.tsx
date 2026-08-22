@@ -124,7 +124,9 @@ export default function ChatWidget() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isStreaming ? "auto" : "smooth",
+    });
   }, [messages, isStreaming, isExpanded]);
 
   const showHeader =

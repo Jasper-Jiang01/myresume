@@ -26,8 +26,17 @@ import {
   type AgentStreamEvent,
 } from "@/components/myAgent/stream";
 import {
+  assertWithinDailyLimit,
+  insertConversationMessage,
+  isUuid,
+  loadLlmHistory,
+  normalizeUserContent,
+  resolveOwnedConversation,
+} from "@/components/myAgent/chatPersistence";
+import {
   AGENT_TOOLS,
   executeAgentTool,
+  resolveAllowedNavigate,
   type AgentNavigateAction,
 } from "@/components/myAgent/tools";
 
@@ -71,15 +80,27 @@ function getKnowledge(): string {
   return knowledgeCache;
 }
 
-function buildSystemPrompt(): string {
+function parseLocale(raw: unknown): "zh" | "en" {
+  return raw === "en" ? "en" : "zh";
+}
+
+function buildSystemPrompt(locale: "zh" | "en"): string {
   const knowledge = getKnowledge();
-  return [
-    "你是蒋文喆个人网站上的小助手，女性口吻，简洁友善，像熟悉他作品的同事。",
-    "用中文回答访客。只依据下方知识表介绍他的经历、技能和项目；知识表没有的信息就说不确定，不要编造。",
-    "可以引导访客去看首页、/personalProject 作品集、/mycrafts 动效实验站。",
-    "当访客明确要求打开、跳转、带去看某个项目或页面时，调用 open_project 工具，不要只丢链接让对方自己点。介绍项目时不要调用该工具。",
-    knowledge ? `\n---\n${knowledge}` : "",
-  ].join("\n");
+  const instructions =
+    locale === "en"
+      ? [
+          "You are the assistant on Jiang Wenzhe's personal site. Speak in a concise, friendly, female voice, like a colleague who knows his work.",
+          "Reply in English. Only use the knowledge table below for his experience, skills, and projects; if it is not there, say you are not sure. Do not invent facts.",
+          "You can point visitors to Home, /personalProject, and /mycrafts.",
+          "When the visitor clearly asks to open, jump to, or be taken to a project or page, call open_project. Do not just drop a link. Do not call it when only introducing a project.",
+        ]
+      : [
+          "你是蒋文喆个人网站上的小助手，女性口吻，简洁友善，像熟悉他作品的同事。",
+          "用中文回答访客。只依据下方知识表介绍他的经历、技能和项目；知识表没有的信息就说不确定，不要编造。",
+          "可以引导访客去看首页、/personalProject 作品集、/mycrafts 动效实验站。",
+          "当访客明确要求打开、跳转、带去看某个项目或页面时，调用 open_project 工具，不要只丢链接让对方自己点。介绍项目时不要调用该工具。",
+        ];
+  return [...instructions, knowledge ? `\n---\n${knowledge}` : ""].join("\n");
 }
 
 let supabaseAdmin: SupabaseClient | null = null;
@@ -101,8 +122,8 @@ function getSupabaseAdmin(): SupabaseClient {
 
 export async function POST(req: NextRequest) {
   try {
-    const deviceId = req.headers.get("x-device-id");
-    if (!deviceId) {
+    const deviceId = req.headers.get("x-device-id")?.trim() ?? "";
+    if (!deviceId || !isUuid(deviceId)) {
       return NextResponse.json(
         { error: "auth_error", message: "请先登录" },
         { status: 401 }
@@ -110,13 +131,25 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as {
-      messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
-      conversationId?: string;
+      content?: unknown;
+      conversationId?: unknown;
       nickname?: string;
+      locale?: unknown;
     };
 
-    const { messages, nickname } = body;
-    let { conversationId } = body;
+    const userContent = normalizeUserContent(body.content);
+    if (!userContent) {
+      return NextResponse.json(
+        { error: "invalid_request", message: "请输入要发送的内容" },
+        { status: 400 }
+      );
+    }
+
+    const locale = parseLocale(body.locale);
+
+    const requestedConversationId =
+      typeof body.conversationId === "string" ? body.conversationId.trim() : "";
+    const nickname = body.nickname;
 
     const admin = getSupabaseAdmin();
 
@@ -168,38 +201,70 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!conversationId) {
-      const { data: conv, error: convErr } = await admin
-        .from("conversations")
-        .insert({ profile_id: deviceId })
-        .select("id")
-        .single();
-
-      if (convErr || !conv) {
-        return NextResponse.json(
-          {
-            error: "db_error",
-            message: convErr?.message || "创建对话失败，请检查 conversations 表",
-          },
-          { status: 500 }
-        );
-      }
-      conversationId = conv.id as string;
+    const rate = await assertWithinDailyLimit(admin, deviceId);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: rate.error, message: rate.message },
+        { status: rate.status }
+      );
     }
 
-    // 2. 调用 LLM：首轮与工具跟进都走 SSE，token 到达即推给前端
+    const conversation = await resolveOwnedConversation(
+      admin,
+      deviceId,
+      requestedConversationId || undefined
+    );
+    if (!conversation.ok) {
+      return NextResponse.json(
+        { error: conversation.error, message: conversation.message },
+        { status: conversation.status }
+      );
+    }
+    const conversationId = conversation.id;
+
+    const savedUser = await insertConversationMessage(
+      admin,
+      conversationId,
+      "user",
+      userContent
+    );
+    if (!savedUser.ok) {
+      return NextResponse.json(
+        { error: savedUser.error, message: savedUser.message },
+        { status: savedUser.status }
+      );
+    }
+
+    const history = await loadLlmHistory(admin, conversationId);
+    if (!history.ok) {
+      return NextResponse.json(
+        { error: history.error, message: history.message },
+        { status: history.status }
+      );
+    }
+
+    // 2. 调用 LLM：上下文只来自该会话在库中的消息，不采信前端 history
     const openaiClient = getOpenAI();
     const model = env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus";
+    const storedMessages = [...history.messages];
+    const lastStored = storedMessages[storedMessages.length - 1];
+    if (lastStored?.role !== "user" || lastStored.content !== userContent) {
+      storedMessages.push({ role: "user", content: userContent });
+    }
     const llmMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: buildSystemPrompt() },
-      ...messages,
+      { role: "system", content: buildSystemPrompt(locale) },
+      ...storedMessages,
     ];
 
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
         const send = (event: AgentStreamEvent) => {
-          controller.enqueue(encoder.encode(encodeAgentStreamEvent(event)));
+          try {
+            controller.enqueue(encoder.encode(encodeAgentStreamEvent(event)));
+          } catch {
+            /* client disconnected */
+          }
         };
 
         let fullContent = "";
@@ -228,7 +293,12 @@ export async function POST(req: NextRequest) {
                   args = {};
                 }
                 const executed = executeAgentTool(call.function.name, args);
-                if (executed.navigate) navigate = executed.navigate;
+                if (executed.navigate) {
+                  navigate = resolveAllowedNavigate(
+                    executed.navigate.href,
+                    executed.navigate.internal
+                  ) ?? undefined;
+                }
                 return {
                   role: "tool" as const,
                   tool_call_id: call.id,
@@ -259,11 +329,12 @@ export async function POST(req: NextRequest) {
           send({ type: "done" });
 
           if (conversationId && fullContent) {
-            await admin.from("messages").insert({
-              conversation_id: conversationId,
-              role: "assistant",
-              content: fullContent,
-            });
+            await insertConversationMessage(
+              admin,
+              conversationId,
+              "assistant",
+              fullContent
+            );
           }
         } catch (err) {
           const message =
