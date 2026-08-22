@@ -3,7 +3,7 @@
  *
  * 依赖环境变量（见 components/myAgent/README.md）：
  * - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
- * - OPENAI_API_KEY / OPENAI_BASE_URL / LLM_MODEL
+ * - OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_DEFAULT_MODEL（兼容 LLM_MODEL）
  *
  * 注意：该路由仅在动态部署（Vercel）下生效。GitHub Pages 静态导出
  * （next.config.mjs 中 output: "export"）不会打包 API Route。
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
 
     // 2. 调用 LLM 流式接口
     const stream = await getOpenAI().chat.completions.create({
-      model: process.env.LLM_MODEL || "gpt-4o-mini",
+      model: env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus",
       messages: [
         {
           role: "system",
