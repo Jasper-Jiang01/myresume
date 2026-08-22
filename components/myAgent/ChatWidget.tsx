@@ -143,7 +143,7 @@ export default function ChatWidget() {
       : isStreaming
         ? "正在回复…"
         : nickname
-          ? "和文喆聊天"
+          ? "和文喆的小助手聊天"
           : "取个昵称再开始吧";
 
   const placeholder = !nickname
@@ -231,8 +231,8 @@ export default function ChatWidget() {
                       }`}
                     >
                       {msg.content || (
-                        <span className="inline-block animate-pulse text-[#1d1e2b73]">
-                          …
+                        <span className="inline-flex animate-pulse text-[#1d1e2b73]">
+                          {isStreaming ? "文喆正在思考中" : "…"}
                         </span>
                       )}
                     </div>

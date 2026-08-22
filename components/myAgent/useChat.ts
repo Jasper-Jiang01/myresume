@@ -150,8 +150,13 @@ export function useChat(): UseChatReturn {
       role: "user",
       content: input.trim(),
     };
+    const assistantId = crypto.randomUUID();
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      { id: assistantId, role: "assistant", content: "" },
+    ]);
     setInput("");
     setIsStreaming(true);
     setIsExpanded(true);
@@ -230,12 +235,6 @@ export function useChat(): UseChatReturn {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
-      const assistantId = crypto.randomUUID();
-
-      setMessages((prev) => [
-        ...prev,
-        { id: assistantId, role: "assistant", content: "" },
-      ]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -251,6 +250,9 @@ export function useChat(): UseChatReturn {
 
       // Assistant 消息由 /api/chat 在流结束后写入，避免前后端重复落库。
     } catch (err) {
+      setMessages((prev) =>
+        prev.filter((m) => !(m.id === assistantId && !m.content))
+      );
       setError(
         err instanceof Error ? err.message : "文喆走神了，晚点再来试试吧…"
       );
