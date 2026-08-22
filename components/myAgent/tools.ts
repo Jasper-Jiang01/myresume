@@ -6,7 +6,7 @@ export type ProjectLink = {
   /** true：走 Next 路由；false：整页跳转到静态资源 */
   internal: boolean;
   title: { zh: string; en: string };
-  aliases: string[];
+  aliases: readonly string[];
 };
 
 /**
@@ -92,7 +92,7 @@ export const OPEN_PROJECT_TOOL: ChatCompletionTool = {
       "可选 id：" +
       PROJECT_LINKS.map(
         (item) =>
-          `${item.id}=${item.title.zh}/${item.title.en}（${item.aliases.join("、")}）`
+          `${item.id}=${item.title.zh}/${item.title.en}（${item.aliases.join("、")}）`,
       ).join("；") +
       "。没有对应页面时不要调用。",
     parameters: {
@@ -146,9 +146,7 @@ function parseOpenProjectId(args: unknown): string | null {
 
 export function executeOpenProject(args: unknown): OpenProjectResult {
   const id = parseOpenProjectId(args);
-  const found = id
-    ? PROJECT_LINKS.find((item) => item.id === id)
-    : undefined;
+  const found = id ? PROJECT_LINKS.find((item) => item.id === id) : undefined;
 
   if (!found) {
     return {
@@ -169,7 +167,7 @@ export function executeOpenProject(args: unknown): OpenProjectResult {
 
 export function executeAgentTool(
   name: string,
-  args: unknown
+  args: unknown,
 ): { result: unknown; navigate?: AgentNavigateAction } {
   if (name === OPEN_PROJECT_NAME) {
     const result = executeOpenProject(args);
@@ -191,7 +189,7 @@ export function encodeNavigateHeader(action: AgentNavigateAction): string {
 }
 
 export function decodeNavigateHeader(
-  value: string | null
+  value: string | null,
 ): AgentNavigateAction | null {
   if (!value) return null;
   try {

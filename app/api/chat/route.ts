@@ -19,13 +19,21 @@ import type {
 } from "openai/resources/chat/completions";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import {
+  AGENT_STREAM_HEADERS,
+  consumeChatStream,
+  encodeAgentStreamEvent,
+  toAssistantToolMessage,
+  type AgentStreamEvent,
+} from "@/components/myAgent/stream";
+import {
   AGENT_TOOLS,
-  encodeNavigateHeader,
   executeAgentTool,
   type AgentNavigateAction,
 } from "@/components/myAgent/tools";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // 惰性初始化：避免在模块加载阶段（含 GitHub Pages 静态导出构建时的
 // collect-page-data 步骤）因缺失环境变量而抛错中断构建。
@@ -179,7 +187,7 @@ export async function POST(req: NextRequest) {
       conversationId = conv.id as string;
     }
 
-    // 2. 调用 LLM：先探测是否要开工具，再流式返回最终回复
+    // 2. 调用 LLM：首轮与工具跟进都走 SSE，token 到达即推给前端
     const openaiClient = getOpenAI();
     const model = env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus";
     const llmMessages: ChatCompletionMessageParam[] = [
@@ -187,89 +195,92 @@ export async function POST(req: NextRequest) {
       ...messages,
     ];
 
-    const first = await openaiClient.chat.completions.create({
-      model,
-      messages: llmMessages,
-      tools: AGENT_TOOLS,
-      tool_choice: "auto",
-    });
-
-    const firstMessage = first.choices[0]?.message;
-    let navigate: AgentNavigateAction | undefined;
-    let followupMessages: ChatCompletionMessageParam[] | null = null;
-
-    if (firstMessage?.tool_calls?.length) {
-      const toolMessages: ChatCompletionToolMessageParam[] =
-        firstMessage.tool_calls.map((call) => {
-          if (call.type !== "function") {
-            return {
-              role: "tool",
-              tool_call_id: call.id,
-              content: JSON.stringify({ ok: false, error: "不支持的工具类型" }),
-            };
-          }
-          let args: unknown = {};
-          try {
-            args = JSON.parse(call.function.arguments || "{}");
-          } catch {
-            args = {};
-          }
-          const executed = executeAgentTool(call.function.name, args);
-          if (executed.navigate) navigate = executed.navigate;
-          return {
-            role: "tool",
-            tool_call_id: call.id,
-            content: JSON.stringify(executed.result),
-          };
-        });
-
-      followupMessages = [
-        ...llmMessages,
-        firstMessage,
-        ...toolMessages,
-      ];
-    }
-
     const encoder = new TextEncoder();
-    let fullContent = "";
-
     const readable = new ReadableStream({
       async start(controller) {
-        if (followupMessages) {
-          const stream = await openaiClient.chat.completions.create({
+        const send = (event: AgentStreamEvent) => {
+          controller.enqueue(encoder.encode(encodeAgentStreamEvent(event)));
+        };
+
+        let fullContent = "";
+        try {
+          const firstStream = await openaiClient.chat.completions.create({
             model,
-            messages: followupMessages,
+            messages: llmMessages,
+            tools: AGENT_TOOLS,
+            tool_choice: "auto",
             stream: true,
           });
-          for await (const chunk of stream) {
-            const text = chunk.choices[0]?.delta?.content || "";
+
+          const first = await consumeChatStream(firstStream, (text) => {
             fullContent += text;
-            if (text) controller.enqueue(encoder.encode(text));
-          }
-        } else {
-          const text = firstMessage?.content ?? "";
-          fullContent = text;
-          if (text) controller.enqueue(encoder.encode(text));
-        }
-
-        controller.close();
-
-        if (conversationId && fullContent) {
-          await admin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: fullContent,
+            send({ type: "token", text });
           });
+
+          if (first.toolCalls.length) {
+            let navigate: AgentNavigateAction | undefined;
+            const toolMessages: ChatCompletionToolMessageParam[] =
+              first.toolCalls.map((call) => {
+                let args: unknown = {};
+                try {
+                  args = JSON.parse(call.function.arguments || "{}");
+                } catch {
+                  args = {};
+                }
+                const executed = executeAgentTool(call.function.name, args);
+                if (executed.navigate) navigate = executed.navigate;
+                return {
+                  role: "tool" as const,
+                  tool_call_id: call.id,
+                  content: JSON.stringify(executed.result),
+                };
+              });
+
+            if (navigate) {
+              send({ type: "navigate", ...navigate });
+            }
+
+            const followupStream = await openaiClient.chat.completions.create({
+              model,
+              messages: [
+                ...llmMessages,
+                toAssistantToolMessage(first),
+                ...toolMessages,
+              ],
+              stream: true,
+            });
+
+            await consumeChatStream(followupStream, (text) => {
+              fullContent += text;
+              send({ type: "token", text });
+            });
+          }
+
+          send({ type: "done" });
+
+          if (conversationId && fullContent) {
+            await admin.from("messages").insert({
+              conversation_id: conversationId,
+              role: "assistant",
+              content: fullContent,
+            });
+          }
+        } catch (err) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "AI 走神了，晚点再来试试吧…";
+          send({ type: "error", message });
+        } finally {
+          controller.close();
         }
       },
     });
 
     return new Response(readable, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
+        ...AGENT_STREAM_HEADERS,
         ...(conversationId ? { "x-conversation-id": conversationId } : {}),
-        ...(navigate ? { "x-agent-navigate": encodeNavigateHeader(navigate) } : {}),
       },
     });
   } catch (err) {

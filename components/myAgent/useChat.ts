@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { withBasePath } from "@/lib/paths";
+import { readAgentStream } from "./stream";
 import { getSupabase } from "./supabaseClient";
-import { decodeNavigateHeader } from "./tools";
 import type { Message } from "./types";
 
 const DEVICE_ID_KEY = "myAgent_device_id";
@@ -239,32 +239,29 @@ export function useChat(): UseChatReturn {
         throw new Error(errors.network);
       }
 
-      const navigate = decodeNavigateHeader(
-        response.headers.get("x-agent-navigate")
-      );
-      if (navigate) {
-        if (navigate.internal) {
-          router.push(navigate.href);
-        } else {
-          window.location.assign(withBasePath(navigate.href));
-        }
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
       let assistantContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        assistantContent += chunk;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: assistantContent } : m
-          )
-        );
-      }
+      await readAgentStream(response.body, (event) => {
+        if (event.type === "token") {
+          assistantContent += event.text;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, content: assistantContent } : m
+            )
+          );
+          return;
+        }
+        if (event.type === "navigate") {
+          if (event.internal) {
+            router.push(event.href);
+          } else {
+            window.location.assign(withBasePath(event.href));
+          }
+          return;
+        }
+        if (event.type === "error") {
+          throw new Error(event.message || errors.distracted);
+        }
+      });
 
       // Assistant 消息由 /api/chat 在流结束后写入，避免前后端重复落库。
     } catch (err) {
