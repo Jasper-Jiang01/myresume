@@ -21,24 +21,35 @@ export const runtime = "nodejs";
 let openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!openai) {
+    const apiKey = env("OPENAI_API_KEY");
+    if (!apiKey) {
+      throw new Error("缺少环境变量：OPENAI_API_KEY");
+    }
     openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+      apiKey,
+      baseURL: env("OPENAI_BASE_URL") || "https://api.openai.com/v1",
     });
   }
   return openai;
 }
 
+function env(name: string): string {
+  return (process.env[name] ?? "").trim();
+}
+
 let supabaseAdmin: SupabaseClient | null = null;
 function getSupabaseAdmin(): SupabaseClient {
   if (!supabaseAdmin) {
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("缺少 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 环境变量");
+    // URL 与前端是同一个项目地址，允许回退 NEXT_PUBLIC_SUPABASE_URL。
+    const url = env("SUPABASE_URL") || env("NEXT_PUBLIC_SUPABASE_URL");
+    const serviceRoleKey = env("SUPABASE_SERVICE_ROLE_KEY");
+    const missing: string[] = [];
+    if (!url) missing.push("SUPABASE_URL（或 NEXT_PUBLIC_SUPABASE_URL）");
+    if (!serviceRoleKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (missing.length) {
+      throw new Error(`缺少环境变量：${missing.join("、")}`);
     }
-    supabaseAdmin = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    supabaseAdmin = createClient(url, serviceRoleKey);
   }
   return supabaseAdmin;
 }
