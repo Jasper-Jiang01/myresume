@@ -9,6 +9,8 @@
  * （next.config.mjs 中 output: "export"）不会打包 API Route。
  */
 
+import { readFileSync } from "fs";
+import { join } from "path";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
@@ -35,6 +37,30 @@ function getOpenAI(): OpenAI {
 
 function env(name: string): string {
   return (process.env[name] ?? "").trim();
+}
+
+let knowledgeCache: string | null = null;
+function getKnowledge(): string {
+  if (knowledgeCache !== null) return knowledgeCache;
+  try {
+    knowledgeCache = readFileSync(
+      join(process.cwd(), "components/myAgent/KNOWLEDGE.md"),
+      "utf8"
+    );
+  } catch {
+    knowledgeCache = "";
+  }
+  return knowledgeCache;
+}
+
+function buildSystemPrompt(): string {
+  const knowledge = getKnowledge();
+  return [
+    "你是蒋文喆个人网站上的小助手，女性口吻，简洁友善，像熟悉他作品的同事。",
+    "用中文回答访客。只依据下方知识表介绍他的经历、技能和项目；知识表没有的信息就说不确定，不要编造。",
+    "可以引导访客去看首页、/personalProject 作品集、/mycrafts 动效实验站。",
+    knowledge ? `\n---\n${knowledge}` : "",
+  ].join("\n");
 }
 
 let supabaseAdmin: SupabaseClient | null = null;
@@ -148,8 +174,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "system",
-          content:
-            "你是蒋文喆个人网站上的 AI 助手。用简洁、友善的中文回答访客问题，可以介绍他的经历、项目与设计工程实践。不确定的信息不要编造。",
+          content: buildSystemPrompt(),
         },
         ...messages,
       ],
