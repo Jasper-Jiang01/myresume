@@ -20,14 +20,15 @@ function cspValue(sources) {
 }
 
 // Next.js App Router 会注入内联脚本/样式（偏好引导、hydration），无法在不引入
-// nonce middleware 的前提下去掉 'unsafe-inline'。开发态还需要 'unsafe-eval' 给
-// webpack/HMR。cssdoodle 演示页会拉 Google Fonts、unpkg/esm.sh 上的 GSAP。
+// nonce middleware 的前提下去掉 'unsafe-inline'。webpack 客户端运行时会用
+// new Function() 探测全局对象，生产/开发都需要 'unsafe-eval'，否则会 EvalError。
+// cssdoodle 演示页会拉 Google Fonts、unpkg/esm.sh 上的 GSAP。
 const contentSecurityPolicy = cspValue({
   "default-src": ["'self'"],
   "script-src": [
     "'self'",
     "'unsafe-inline'",
-    ...(isProd ? [] : ["'unsafe-eval'"]),
+    "'unsafe-eval'",
     "https://unpkg.com",
     "https://esm.sh",
     "https://cdn.esm.sh",
