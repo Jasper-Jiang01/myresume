@@ -59,6 +59,22 @@ export function useChat(): UseChatReturn {
   const [isPinned, setIsPinned] = useState(false);
   const deviceIdRef = useRef<string>("");
   const abortRef = useRef<AbortController | null>(null);
+  const latestRef = useRef({
+    input,
+    isStreaming,
+    isSubmittingNickname,
+    nickname,
+    locale,
+    errors,
+  });
+  latestRef.current = {
+    input,
+    isStreaming,
+    isSubmittingNickname,
+    nickname,
+    locale,
+    errors,
+  };
 
   useEffect(() => {
     deviceIdRef.current = getDeviceId();
@@ -150,16 +166,32 @@ export function useChat(): UseChatReturn {
   }, []);
 
   const sendMessage = async () => {
-    if (!input.trim() || isStreaming || isSubmittingNickname) return;
-    setError(null);
+    const {
+      input: raw,
+      isStreaming: streaming,
+      isSubmittingNickname: submitting,
+      nickname: nick,
+      locale: activeLocale,
+      errors: activeErrors,
+    } = latestRef.current;
+    const text = raw.trim();
+    if (!text || streaming || submitting) return;
 
-    if (!nickname) {
+    const activeNickname = nick ?? localStorage.getItem(NICKNAME_KEY);
+    if (activeNickname && !nick) setNickname(activeNickname);
+
+    setError(null);
+    setInput("");
+
+    if (!activeNickname) {
       setIsSubmittingNickname(true);
       try {
-        await submitNickname(input);
-        setInput("");
+        await submitNickname(text);
       } catch (err) {
-        setError(err instanceof Error ? err.message : errors.profile);
+        setInput(text);
+        setError(
+          err instanceof Error ? err.message : activeErrors.profile
+        );
       } finally {
         setIsSubmittingNickname(false);
       }
@@ -169,7 +201,7 @@ export function useChat(): UseChatReturn {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: input.trim(),
+      content: text,
     };
     const assistantId = crypto.randomUUID();
 
@@ -178,7 +210,6 @@ export function useChat(): UseChatReturn {
       userMessage,
       { id: assistantId, role: "assistant", content: "" },
     ]);
-    setInput("");
     setIsStreaming(true);
     setIsExpanded(true);
 
@@ -212,8 +243,8 @@ export function useChat(): UseChatReturn {
         body: JSON.stringify({
           content: userMessage.content,
           conversationId: conversationId || undefined,
-          nickname,
-          locale,
+          nickname: activeNickname,
+          locale: activeLocale,
         }),
       });
 
@@ -227,7 +258,7 @@ export function useChat(): UseChatReturn {
           message?: string;
         };
         if (response.status === 429) {
-          throw new Error(errors.rateLimit);
+          throw new Error(activeErrors.rateLimit);
         }
         if (response.status === 401) {
           localStorage.removeItem(NICKNAME_KEY);
@@ -236,13 +267,13 @@ export function useChat(): UseChatReturn {
         if (response.status === 403) {
           localStorage.removeItem(CONVERSATION_ID_KEY);
         }
-        throw new Error(errBody.message || errors.distracted);
+        throw new Error(errBody.message || activeErrors.distracted);
       }
 
       userPersisted = true;
 
       if (!response.body) {
-        throw new Error(errors.network);
+        throw new Error(activeErrors.network);
       }
 
       await readAgentStream(
@@ -262,7 +293,7 @@ export function useChat(): UseChatReturn {
             return;
           }
           if (event.type === "error") {
-            throw new Error(event.message || errors.distracted);
+            throw new Error(event.message || activeErrors.distracted);
           }
         },
         abort.signal
@@ -286,7 +317,7 @@ export function useChat(): UseChatReturn {
         })
       );
       setError(
-        err instanceof Error ? err.message : errors.distracted
+        err instanceof Error ? err.message : activeErrors.distracted
       );
     } finally {
       if (abortRef.current === abort) {

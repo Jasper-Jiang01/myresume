@@ -4,12 +4,18 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { useChat } from "./useChat";
 
+/* -------------------------------------------------------------------------- */
+/* 布局与动画常量                                                                */
+/* -------------------------------------------------------------------------- */
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 const MOTION_MS = 360;
 const GREETING_H = 30;
 const TRANSCRIPT_MAX_H = 321;
 const TRANSCRIPT_PAD_Y = 16;
 
+/* -------------------------------------------------------------------------- */
+/* 图标                                                                        */
+/* -------------------------------------------------------------------------- */
 function ExpandIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -62,6 +68,9 @@ function NewChatIcon() {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* 流式回复时的逐字闪烁文案                                                        */
+/* -------------------------------------------------------------------------- */
 function ThinkingText({ text }: { text: string }) {
   const chars = Array.from(text);
 
@@ -92,6 +101,9 @@ function SendIcon() {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* 通用图标按钮（展开 / 收起 / 置顶 / 新对话）                                       */
+/* -------------------------------------------------------------------------- */
 function IconButton({
   label,
   onClick,
@@ -124,6 +136,7 @@ function IconButton({
 }
 
 export default function ChatWidget() {
+  /* 文案与对话状态（语言、消息、输入、置顶/展开） */
   const { messages: copy } = usePreferences();
   const {
     messages,
@@ -141,6 +154,7 @@ export default function ChatWidget() {
     startNewConversation,
   } = useChat();
 
+  /* 悬浮/聚焦、面板开合、对话区高度与滚动锚点 */
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [transcriptH, setTranscriptH] = useState(GREETING_H);
@@ -149,7 +163,9 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lastSentRef = useRef("");
 
+  /* 是否展开对话、能否发送等派生状态 */
   const hasMessages = messages.length > 0;
   const wantsOpen =
     hovered || focused || isPinned || isSubmittingNickname;
@@ -158,6 +174,7 @@ export default function ChatWidget() {
     Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
   const transcriptAtMax = transcriptH >= TRANSCRIPT_MAX_H;
 
+  /* 悬停/聚焦/置顶时先加宽再打开面板；离开后等动画结束再收窄 */
   useEffect(() => {
     if (wantsOpen) {
       setWideOpen(true);
@@ -170,6 +187,7 @@ export default function ChatWidget() {
     return () => window.clearTimeout(timer);
   }, [wantsOpen]);
 
+  /* 按消息列表实际高度撑开对话区，封顶 TRANSCRIPT_MAX_H */
   useLayoutEffect(() => {
     if (!showTranscript) {
       setTranscriptH(GREETING_H);
@@ -190,12 +208,14 @@ export default function ChatWidget() {
     return () => observer.disconnect();
   }, [showTranscript, messages]);
 
+  /* 新消息或流式更新时滚到列表底部 */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: isStreaming ? "auto" : "smooth",
     });
   }, [messages, isStreaming, isExpanded, transcriptH]);
 
+  /* 顶栏文案、输入框占位、宽度/高度 class */
   const headerText = error
     ? error
     : isSubmittingNickname
@@ -235,7 +255,7 @@ export default function ChatWidget() {
         className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${wideOpen ? "bg-[var(--chat-bg-active)]" : ""}`}
         style={{ transitionTimingFunction: EASE }}
       >
-        {/* Header：问候条；发消息后向上撑开成对话区 */}
+        {/* Header：问候条；有消息且展开后向上撑开成对话区 */}
         <div
           className="grid transition-[grid-template-rows] duration-[360ms]"
           style={{
@@ -245,6 +265,7 @@ export default function ChatWidget() {
         >
           <div className="min-h-0 overflow-hidden">
             {showTranscript ? (
+              /* 对话记录：气泡列表 + 收起按钮 */
               <div className="relative flex h-full min-h-0 flex-col px-3 pb-1 pt-3">
                 <IconButton
                   label={copy.chat.collapse}
@@ -268,8 +289,8 @@ export default function ChatWidget() {
                         <div
                           className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
                             msg.role === "user"
-                              ? "bg-[var(--chat-user-bg)] text-[var(--chat-user-fg)]"
-                              : "bg-[var(--chat-assistant-bg)] text-[var(--chat-text)] shadow-sm"
+                              ? "bg-[var(--chat-user-bg)] text-[var(--chat-user-fg)] backdrop-blur-md"
+                              : "text-[var(--chat-text)]"
                           }`}
                         >
                           {msg.content || (
@@ -289,6 +310,7 @@ export default function ChatWidget() {
                 </div>
               </div>
             ) : (
+              /* 问候条：状态文案；有历史时可点展开 */
               <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)]">
                 <p
                   className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
@@ -309,27 +331,41 @@ export default function ChatWidget() {
           </div>
         </div>
 
-        {/* Body: composer */}
+        {/* Body：输入框、置顶/新对话、发送 */}
         <div
           className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[var(--chat-border)] bg-[var(--chat-bg)] px-3 py-3 transition-[height,border-radius] duration-[360ms] ${
             isCompact ? "justify-center" : ""
           } ${bodyHeightClass}`}
           style={{ transitionTimingFunction: EASE }}
         >
+          {/* 发送后浏览器可能回填同一段文字，用 lastSentRef 挡住这次回填 */}
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (
+                lastSentRef.current &&
+                (next === lastSentRef.current ||
+                  next.trim() === lastSentRef.current)
+              ) {
+                lastSentRef.current = "";
+                setInput("");
+                return;
+              }
+              lastSentRef.current = "";
+              setInput(next);
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
+              if (e.key !== "Enter" || e.shiftKey) return;
+              if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+              e.preventDefault();
+              lastSentRef.current = input.trim();
+              sendMessage();
             }}
             placeholder={placeholder}
-            disabled={isSubmittingNickname}
             maxLength={nickname ? undefined : 20}
             rows={1}
             aria-label={copy.chat.inputLabel}
@@ -338,6 +374,7 @@ export default function ChatWidget() {
             }`}
           />
 
+          {/* 左下角：置顶、新对话（仅展开且已有昵称时显示） */}
           <div
             className={`absolute bottom-3 left-3 flex h-6 items-center gap-1 transition-[opacity,transform] duration-200 ease-out ${
               nickname && isExpanded && panelOpen
@@ -358,11 +395,15 @@ export default function ChatWidget() {
             </IconButton>
           </div>
 
+          {/* 右下角发送 */}
           <button
             type="button"
             aria-label={copy.chat.send}
             disabled={!canSend}
-            onClick={sendMessage}
+            onClick={() => {
+              lastSentRef.current = input.trim();
+              sendMessage();
+            }}
             className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-[var(--chat-btn)] p-1 text-[10px] text-[var(--chat-btn-fg)] transition-opacity hover:opacity-85 disabled:opacity-35 ${
               isCompact ? "top-1/2 -translate-y-1/2" : "bottom-3"
             }`}

@@ -27,9 +27,8 @@
   --chat-text-secondary: rgba(29, 30, 43, 0.85);
   --chat-text-muted: rgba(29, 30, 43, 0.65);
   --chat-placeholder: rgba(29, 30, 43, 0.45);
-  --chat-user-bg: rgba(29, 30, 43, 0.95);
-  --chat-user-fg: #ffffff;
-  --chat-assistant-bg: rgba(255, 255, 255, 0.7);
+  --chat-user-bg: rgba(29, 30, 43, 0.08);
+  --chat-user-fg: rgba(29, 30, 43, 0.95);
   --chat-btn: #1d1e2b;
   --chat-btn-fg: #ffffff;
   --chat-shadow: 0 4px 36px 12px rgba(29, 30, 43, 0.1);
@@ -67,9 +66,8 @@
   --chat-text-secondary: rgba(255, 255, 255, 0.85);
   --chat-text-muted: rgba(255, 255, 255, 0.55);
   --chat-placeholder: rgba(255, 255, 255, 0.4);
-  --chat-user-bg: rgba(245, 245, 245, 0.95);
-  --chat-user-fg: #121318;
-  --chat-assistant-bg: rgba(255, 255, 255, 0.08);
+  --chat-user-bg: rgba(255, 255, 255, 0.12);
+  --chat-user-fg: rgba(255, 255, 255, 0.95);
   --chat-btn: #f5f5f5;
   --chat-btn-fg: #121318;
   --chat-shadow: 0 4px 36px 12px rgba(0, 0, 0, 0.35);
