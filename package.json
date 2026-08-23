@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run clean:src",
+    "build": "next build && npm run clean:src && npm run check:static-leaks",
     "clean:src": "test -d dist && find dist -type d -name \".src\" -prune -exec rm -rf {} + || true",
+    "check:static-leaks": "node scripts/check-static-leaks.js",
     "protect:cssdoodle": "node scripts/protect-cssdoodle.js",
     "start": "next start",
     "lint": "next lint"

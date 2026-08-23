@@ -65,6 +65,19 @@ function ensureProtectScript(html, protectRelPath) {
   return `${scriptTag}\n${html}`;
 }
 
+/** 去掉 Vite 开发服务器注入的 HMR 脚本，避免生产环境请求 /@vite/client */
+function stripViteDevRuntime(html) {
+  return html
+    .replace(
+      /<script\b[^>]*\bsrc\s*=\s*["'][^"']*\/@vite\/(?:client|env)[^"']*["'][^>]*>\s*<\/script>/gi,
+      ""
+    )
+    .replace(
+      /<script\b[^>]*>[\s\S]*?(?:\/@vite\/client|@react-refresh)[\s\S]*?<\/script>/gi,
+      ""
+    );
+}
+
 async function compressJs(code) {
   const result = await minifyJs(code, {
     mangle: true,
@@ -120,7 +133,10 @@ async function processDemoDir(demoDir) {
     let output;
     if (ext === ".html") {
       const protectRelPath = getProtectRelativePath(demoDir);
-      const withProtect = ensureProtectScript(raw, protectRelPath);
+      const withProtect = ensureProtectScript(
+        stripViteDevRuntime(raw),
+        protectRelPath
+      );
       output = await compressHtml(withProtect);
     } else if (ext === ".js") {
       output = await compressJs(raw);

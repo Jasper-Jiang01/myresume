@@ -23,7 +23,7 @@
   - 收起态：仅显示输入条（宽 480px，高 ~99px）。
   - 展开态：显示消息列表 + 输入条（宽 560px，高 ~390px）。
   - 常驻展开（Pin）：点击后无法收起。
-- **昵称层**：首次使用需输入 1~20 字符昵称，基于设备 ID 记录（"账号基于访问设备记录"）。昵称唯一性由 Supabase 校验。
+- **身份**：服务端为设备生成随机昵称，不使用首条消息内容；冲突返回统一模糊错误，避免昵称枚举。
 - **消息列表**：User 右对齐深色气泡，Assistant 左对齐浅色气泡。
 - **快捷操作**：展开 / 收起、常驻展开、发送按钮、Enter 发送。
 
@@ -33,12 +33,10 @@
 点击 Chats 按钮
     │
     ▼
-检查本地是否存在 device_id + nickname
-    │
-    ├─ 无 ──► 弹出昵称输入层 ──► 校验唯一性 ──► 写入 Supabase profiles
+检查本地是否存在 device_id
     │
     ▼
-显示聊天面板（输入框可发送）
+显示聊天面板（输入框可发送；服务端按需创建随机昵称 profile）
     │
     ▼
 输入消息 ──► POST /api/chat（Header 带 device-id）
@@ -106,13 +104,17 @@ create table messages (
   created_at timestamptz default now()
 );
 
--- 启用 RLS（如需要）
+-- 启用 RLS，并禁止 anon / authenticated 经 Data API 读写。
+-- 完整加固脚本见 schema.sql（限流表 + 收回权限 + 去掉开放策略）。
 alter table profiles enable row level security;
 alter table conversations enable row level security;
 alter table messages enable row level security;
+revoke all on table profiles from anon, authenticated, public;
+revoke all on table conversations from anon, authenticated, public;
+revoke all on table messages from anon, authenticated, public;
 ```
 
-> 本方案采用**服务端校验 device_id** 而非复杂的 Supabase Auth 匿名登录，更接近原始站点的 "基于访问设备记录" 描述。
+> 没有 Supabase Auth 时，RLS **不能**安全地按客户端自报的 `device_id` 过滤行（伪造 header 即可读全表）。正确做法是：Data API 对聊天表零权限，历史记录只通过 `/api/chat/history` 用 service_role 校验 `conversations.profile_id` 后返回。
 
 ---
 
@@ -161,11 +163,12 @@ const nextConfig = {
 components/myAgent/
 ├── README.md                 ← 本文档
 ├── types.ts                  ← 共享类型
-├── supabaseClient.ts         ← Supabase 浏览器客户端
+├── supabaseAdmin.ts          ← 服务端 Supabase（service_role，不进浏览器）
 ├── useChat.ts                ← 聊天状态管理 Hook
 └── ChatWidget.tsx            ← 前端 UI 组件（入口）
 
 app/api/chat/route.ts         ← Next.js API Route（已落地，动态部署下生效）
+app/api/chat/history/route.ts ← 历史记录（服务端校验会话归属后返回）
 ```
 
 > `next.config.mjs` 已按 `process.env.VERCEL` 区分两种构建形态：
@@ -193,20 +196,19 @@ npm install ai @ai-sdk/openai @supabase/supabase-js
 在项目根目录创建 `.env.local`：
 
 ```env
-# Supabase
+# Supabase（仅服务端；缺任一变量时 API 会显式报错，不再静默跳过）
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # LLM（支持 OpenAI 或任意兼容端点）
 OPENAI_API_KEY=your-openai-key
 OPENAI_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o-mini
+OPENAI_DEFAULT_MODEL=qwen3.7-plus
 ```
 
-- `SUPABASE_SERVICE_ROLE_KEY` 仅在服务端 API Route 中使用，用于绕过 RLS 写入消息。
-- `SUPABASE_ANON_KEY` 与 `SUPABASE_URL` 需加 `NEXT_PUBLIC_` 前缀供前端 `supabaseClient.ts` 使用。
-- 部署到 Vercel 时，在项目 Settings → Environment Variables 中配置这些变量。
+- 聊天读写全部走 `/api/chat` 与 `/api/chat/history`，浏览器 **不** 初始化 Supabase，因此 **不需要** `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`。这两项若只配在 Vercel Runtime 而未参与 `next build`，也不会再让消息列表静默不渲染。
+- `SUPABASE_SERVICE_ROLE_KEY` 仅在服务端使用，用于绕过 RLS 写入消息。
+- 部署到 Vercel 时，在项目 Settings → Environment Variables 中配置这些变量（Production / Preview 都要配，然后重新部署）。
 
 ---
 
@@ -236,10 +238,11 @@ export default function HomePage() {
 | 文件 | 职责 |
 |------|------|
 | `types.ts` | `Message`、`Profile`、`Conversation` 的 TypeScript 类型定义 |
-| `supabaseClient.ts` | 创建浏览器端 Supabase 实例，用于读取历史消息、创建对话 |
-| `useChat.ts` | 核心 Hook：device_id 管理、昵称校验、消息列表、流式接收、错误处理 |
-| `ChatWidget.tsx` | 玻璃拟态 UI：昵称浮层、消息气泡、输入框、展开/收起/常驻按钮 |
+| `supabaseAdmin.ts` | 服务端 Supabase 客户端；环境变量缺失时抛错 |
+| `useChat.ts` | 核心 Hook：device_id 管理、消息列表、流式接收、错误处理 |
+| `ChatWidget.tsx` | 玻璃拟态 UI：消息气泡、输入框、展开/收起/常驻按钮 |
 | `app/api/chat/route.ts` | Next.js API Route：校验 device_id → 调 LLM → 流式返回 → 落库 |
+| `app/api/chat/history/route.ts` | 按 device_id 校验会话归属后返回历史消息 |
 
 ---
 
@@ -248,8 +251,8 @@ export default function HomePage() {
 ### 8.1 设备级身份（device_id）
 
 - 首次打开时 `crypto.randomUUID()` 生成 device_id，存入 `localStorage`。
-- 昵称与 device_id 绑定写入 `profiles` 表。
-- 后续请求通过 `x-device-id` Header 传递，服务端校验是否存在对应 profile。
+- 服务端按 device_id 创建 profile，昵称为随机串，不采信客户端上报的昵称或首条消息。
+- 后续请求通过 `x-device-id` Header 传递，仅用于会话归属，不作为限流身份。
 - 优点：无需邮箱/密码，访客零 friction；缺点：换设备/清缓存后身份丢失。
 
 ### 8.2 流式输出（SSE 简化版）
@@ -260,16 +263,16 @@ export default function HomePage() {
 
 ### 8.3 消息持久化时序
 
-1. 用户点击发送 → 前端立即将 User 消息插入 `messages` 表（乐观更新）。
-2. 前端调用 `/api/chat`。
+1. 用户点击发送 → 前端立刻把 User / 空 Assistant 气泡写入本地 state（乐观展示，不依赖 Supabase）。
+2. 前端调用 `/api/chat`；服务端创建会话、写入 User 消息、流式返回 token。
 3. 服务端在流结束后将 Assistant 完整回复写入 `messages` 表。
-4. 如果用户刷新页面，前端从 Supabase 重新拉取该 `conversation_id` 下的历史消息。
+4. 刷新后前端请求 `/api/chat/history`，由服务端校验 `conversations.profile_id` 后返回历史。
 
 ### 8.4 频率限制（Rate Limit）
 
-- 可在 `/api/chat` 中基于 `device_id` 或 IP 做简单计数（Redis / Upstash / Vercel KV）。
+- `/api/chat` 按请求 IP 限流（分钟 8 次 / 上海时区每日 40 次），不信任 `x-device-id`。
 - 超出阈值返回 `429`，前端提示 "今天聊得够多啦，明天再来吧 ☕"。
-- 本方案的参考代码中暂未内置限流，可根据需要自行添加。
+- 计数写入 `chat_rate_limits`（见 `schema.sql`）；表未创建时退回进程内计数。
 
 ---
 

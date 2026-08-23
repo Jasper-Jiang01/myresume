@@ -2,6 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
+import { MAX_USER_CONTENT_CHARS } from "./limits";
 import { useChat } from "./useChat";
 
 /* -------------------------------------------------------------------------- */
@@ -144,9 +145,7 @@ export default function ChatWidget() {
     setInput,
     sendMessage,
     isStreaming,
-    isSubmittingNickname,
     error,
-    nickname,
     isExpanded,
     setIsExpanded,
     isPinned,
@@ -165,13 +164,16 @@ export default function ChatWidget() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastSentRef = useRef("");
 
-  /* 是否展开对话、能否发送等派生状态 */
+  /* 是否展开对话、能否发送等派生状态。
+   * wantsOpen 含 isStreaming：发送当下即使 textarea 失焦 / 尚未 hover，
+   * 对话区也立刻打开，避免消息只存在 React state、却因 wideOpen 仍为 false
+   * 被卸载出 DOM。 */
   const hasMessages = messages.length > 0;
-  const wantsOpen =
-    hovered || focused || isPinned || isSubmittingNickname;
-  const showTranscript = hasMessages && isExpanded && wideOpen;
-  const canSend =
-    Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
+  const wantsOpen = hovered || focused || isPinned || isStreaming;
+  const isWide = wideOpen || wantsOpen;
+  const isPanelOpen = panelOpen || wantsOpen;
+  const showTranscript = hasMessages && isExpanded && wantsOpen;
+  const canSend = Boolean(input.trim()) && !isStreaming;
   const transcriptAtMax = transcriptH >= TRANSCRIPT_MAX_H;
 
   /* 悬停/聚焦/置顶时先加宽再打开面板；离开后等动画结束再收窄 */
@@ -218,31 +220,23 @@ export default function ChatWidget() {
   /* 顶栏文案、输入框占位、宽度/高度 class */
   const headerText = error
     ? error
-    : isSubmittingNickname
-      ? copy.chat.savingNickname
-      : isStreaming
-        ? copy.chat.replying
-        : nickname
-          ? copy.chat.chatting
-          : copy.chat.askNickname;
+    : isStreaming
+      ? copy.chat.replying
+      : copy.chat.chatting;
 
-  const placeholder = !nickname
-    ? focused || input
-      ? copy.chat.nicknameHint
-      : copy.chat.askAnything
-    : copy.chat.askAnything;
+  const placeholder = copy.chat.askAnything;
 
-  const widthClass = !wideOpen
+  const widthClass = !isWide
     ? "w-[360px]"
     : hasMessages && isExpanded
       ? "w-[560px]"
       : "w-[480px]";
 
-  const bodyHeightClass = panelOpen ? "h-[99px]" : "h-[48px]";
-  const headerRows = panelOpen
+  const bodyHeightClass = isPanelOpen ? "h-[99px]" : "h-[48px]";
+  const headerRows = isPanelOpen
     ? `${showTranscript ? transcriptH : GREETING_H}px`
     : "0px";
-  const isCompact = !panelOpen;
+  const isCompact = !isPanelOpen;
 
   return (
     <section
@@ -252,7 +246,7 @@ export default function ChatWidget() {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${wideOpen ? "bg-[var(--chat-bg-active)]" : ""}`}
+        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${isWide ? "bg-[var(--chat-bg-active)]" : ""}`}
         style={{ transitionTimingFunction: EASE }}
       >
         {/* Header：问候条；有消息且展开后向上撑开成对话区 */}
@@ -264,9 +258,13 @@ export default function ChatWidget() {
           }}
         >
           <div className="min-h-0 overflow-hidden">
-            {showTranscript ? (
-              /* 对话记录：气泡列表 + 收起按钮 */
-              <div className="relative flex h-full min-h-0 flex-col px-3 pb-1 pt-3">
+            {/* 有消息就挂到 DOM：收起时用 hidden 藏起，避免卸载后 innerHTML 里看不到气泡 */}
+            {hasMessages && (
+              <div
+                className={`relative h-full min-h-0 flex-col px-3 pb-1 pt-3 ${
+                  showTranscript ? "flex" : "hidden"
+                }`}
+              >
                 <IconButton
                   label={copy.chat.collapse}
                   disabled={isPinned}
@@ -309,25 +307,27 @@ export default function ChatWidget() {
                   </div>
                 </div>
               </div>
-            ) : (
-              /* 问候条：状态文案；有历史时可点展开 */
-              <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)]">
-                <p
-                  className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
-                  aria-live="polite"
-                >
-                  {headerText}
-                </p>
-                {nickname && hasMessages && (
-                  <IconButton
-                    label={copy.chat.expand}
-                    onClick={() => setIsExpanded(true)}
-                  >
-                    <ExpandIcon />
-                  </IconButton>
-                )}
-              </header>
             )}
+            <header
+              className={`relative z-10 h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)] ${
+                showTranscript ? "hidden" : "flex"
+              }`}
+            >
+              <p
+                className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
+                aria-live="polite"
+              >
+                {headerText}
+              </p>
+              {hasMessages && (
+                <IconButton
+                  label={copy.chat.expand}
+                  onClick={() => setIsExpanded(true)}
+                >
+                  <ExpandIcon />
+                </IconButton>
+              )}
+            </header>
           </div>
         </div>
 
@@ -366,7 +366,7 @@ export default function ChatWidget() {
               sendMessage();
             }}
             placeholder={placeholder}
-            maxLength={nickname ? undefined : 20}
+            maxLength={MAX_USER_CONTENT_CHARS}
             rows={1}
             aria-label={copy.chat.inputLabel}
             className={`w-full resize-none bg-transparent pl-1 pr-7 text-[16px] leading-6 text-[var(--chat-text)] outline-none placeholder:text-[var(--chat-placeholder)] disabled:cursor-not-allowed ${
@@ -374,10 +374,10 @@ export default function ChatWidget() {
             }`}
           />
 
-          {/* 左下角：置顶、新对话（仅展开且已有昵称时显示） */}
+          {/* 左下角：置顶、新对话（有消息且展开时显示） */}
           <div
             className={`absolute bottom-3 left-3 flex h-6 items-center gap-1 transition-[opacity,transform] duration-200 ease-out ${
-              nickname && isExpanded && panelOpen
+              hasMessages && isExpanded && isPanelOpen
                 ? "translate-y-0 opacity-100 delay-100"
                 : "pointer-events-none translate-y-1 opacity-0"
             }`}

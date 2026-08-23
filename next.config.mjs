@@ -7,16 +7,20 @@ const isProd = process.env.NODE_ENV === "production";
 const isVercel = process.env.VERCEL === "1";
 const basePath = isProd && !isVercel ? "/myresume" : "";
 
+// 仅 GitHub Pages 的生产构建走静态导出。本地 next dev / Vercel 必须保留
+// API Route，否则 /api/chat 在开发时被当成 export 产物、对话接口不可用。
+const useStaticExport = isProd && !isVercel;
+
 const nextConfig = {
-  ...(isVercel
-    ? {}
-    : {
+  ...(useStaticExport
+    ? {
         output: "export",
         distDir: "dist",
         // 静态导出到 GitHub Pages 等托管商时，尾部斜杠让 /path 生成 /path/index.html，
         // 避免直接访问 /path 时出现 404。
         trailingSlash: true,
-      }),
+      }
+    : {}),
   ...(basePath ? { basePath, assetPrefix: basePath } : {}),
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,

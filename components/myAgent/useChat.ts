@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { withBasePath } from "@/lib/paths";
+import { MAX_USER_CONTENT_CHARS } from "./limits";
 import { readAgentStream } from "./stream";
-import { getSupabase } from "./supabaseClient";
 import type { Message } from "./types";
 
 const DEVICE_ID_KEY = "myAgent_device_id";
@@ -33,9 +33,7 @@ export interface UseChatReturn {
   setInput: (val: string) => void;
   sendMessage: () => Promise<void>;
   isStreaming: boolean;
-  isSubmittingNickname: boolean;
   error: string | null;
-  nickname: string | null;
   hydrated: boolean;
   isExpanded: boolean;
   setIsExpanded: (val: boolean) => void;
@@ -51,9 +49,7 @@ export function useChat(): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isSubmittingNickname, setIsSubmittingNickname] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -62,24 +58,18 @@ export function useChat(): UseChatReturn {
   const latestRef = useRef({
     input,
     isStreaming,
-    isSubmittingNickname,
-    nickname,
     locale,
     errors,
   });
   latestRef.current = {
     input,
     isStreaming,
-    isSubmittingNickname,
-    nickname,
     locale,
     errors,
   };
 
   useEffect(() => {
     deviceIdRef.current = getDeviceId();
-    const storedNick = localStorage.getItem(NICKNAME_KEY);
-    if (storedNick) setNickname(storedNick);
     setHydrated(true);
     return () => {
       abortRef.current?.abort();
@@ -89,72 +79,46 @@ export function useChat(): UseChatReturn {
   const loadHistory = useCallback(async () => {
     if (typeof window === "undefined") return;
     const convId = localStorage.getItem(CONVERSATION_ID_KEY);
-    const supabase = getSupabase();
-    if (!convId || !supabase) return;
+    const deviceId = deviceIdRef.current;
+    if (!convId || !deviceId) return;
 
-    const { data, error: dbError } = await supabase
-      .from("messages")
-      .select("id, role, content, created_at")
-      .eq("conversation_id", convId)
-      .order("created_at", { ascending: true });
-
-    if (dbError) {
-      setError(errors.history);
-      return;
-    }
-
-    if (data) {
-      setMessages(
-        data.map((m) => ({
-          id: m.id,
-          role: m.role as "user" | "assistant",
-          content: m.content,
-          created_at: m.created_at,
-        }))
+    try {
+      const response = await fetch(
+        `/api/chat/history?conversationId=${encodeURIComponent(convId)}`,
+        { headers: { "x-device-id": deviceId } }
       );
+
+      if (response.status === 404) return;
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          localStorage.removeItem(CONVERSATION_ID_KEY);
+        }
+        setError(errors.history);
+        return;
+      }
+
+      const body = (await response.json().catch(() => ({}))) as {
+        messages?: Message[];
+      };
+      if (body.messages) {
+        setMessages(
+          body.messages.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            created_at: m.created_at,
+          }))
+        );
+      }
+    } catch {
+      setError(errors.history);
     }
   }, [errors.history]);
 
   useEffect(() => {
-    if (nickname) loadHistory();
-  }, [nickname, loadHistory]);
-
-  const submitNickname = async (name: string) => {
-    const trimmed = name.trim();
-    if (trimmed.length < 1 || trimmed.length > 20) {
-      throw new Error(errors.nicknameLength);
-    }
-
-    const deviceId = deviceIdRef.current;
-    if (!deviceId) throw new Error(errors.device);
-
-    const supabase = getSupabase();
-    if (supabase) {
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("nickname", trimmed)
-        .maybeSingle();
-
-      if (existing) {
-        throw new Error(errors.nicknameTaken);
-      }
-
-      const { error: insertErr } = await supabase
-        .from("profiles")
-        .insert({ id: deviceId, nickname: trimmed });
-
-      if (insertErr) {
-        if (insertErr.code === "23505") {
-          throw new Error(errors.nicknameTaken);
-        }
-        throw new Error(errors.profile);
-      }
-    }
-
-    localStorage.setItem(NICKNAME_KEY, trimmed);
-    setNickname(trimmed);
-  };
+    if (hydrated) void loadHistory();
+  }, [hydrated, loadHistory]);
 
   const startNewConversation = useCallback(() => {
     abortRef.current?.abort();
@@ -169,34 +133,19 @@ export function useChat(): UseChatReturn {
     const {
       input: raw,
       isStreaming: streaming,
-      isSubmittingNickname: submitting,
-      nickname: nick,
       locale: activeLocale,
       errors: activeErrors,
     } = latestRef.current;
     const text = raw.trim();
-    if (!text || streaming || submitting) return;
+    if (!text || streaming) return;
 
-    const activeNickname = nick ?? localStorage.getItem(NICKNAME_KEY);
-    if (activeNickname && !nick) setNickname(activeNickname);
+    if (text.length > MAX_USER_CONTENT_CHARS) {
+      setError(activeErrors.tooLong);
+      return;
+    }
 
     setError(null);
     setInput("");
-
-    if (!activeNickname) {
-      setIsSubmittingNickname(true);
-      try {
-        await submitNickname(text);
-      } catch (err) {
-        setInput(text);
-        setError(
-          err instanceof Error ? err.message : activeErrors.profile
-        );
-      } finally {
-        setIsSubmittingNickname(false);
-      }
-      return;
-    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -243,7 +192,6 @@ export function useChat(): UseChatReturn {
         body: JSON.stringify({
           content: userMessage.content,
           conversationId: conversationId || undefined,
-          nickname: activeNickname,
           locale: activeLocale,
         }),
       });
@@ -260,9 +208,11 @@ export function useChat(): UseChatReturn {
         if (response.status === 429) {
           throw new Error(activeErrors.rateLimit);
         }
+        if (response.status === 413 || response.status === 400) {
+          if (errBody.message) throw new Error(errBody.message);
+        }
         if (response.status === 401) {
           localStorage.removeItem(NICKNAME_KEY);
-          setNickname(null);
         }
         if (response.status === 403) {
           localStorage.removeItem(CONVERSATION_ID_KEY);
@@ -343,9 +293,7 @@ export function useChat(): UseChatReturn {
     setInput,
     sendMessage,
     isStreaming,
-    isSubmittingNickname,
     error,
-    nickname,
     hydrated,
     isExpanded,
     setIsExpanded: handleSetExpanded,

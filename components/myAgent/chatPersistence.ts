@@ -1,22 +1,45 @@
+import { randomBytes } from "crypto";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  IP_DAILY_LIMIT,
+  IP_MINUTE_LIMIT,
+  LLM_HISTORY_LIMIT,
+  MAX_USER_CONTENT_CHARS,
+  PROFILE_NICKNAME_MAX_ATTEMPTS,
+} from "./limits";
 
-export const MAX_USER_CONTENT_CHARS = 4000;
-export const LLM_HISTORY_LIMIT = 20;
-export const DAILY_USER_MESSAGE_LIMIT = 40;
+export {
+  IP_DAILY_LIMIT,
+  IP_MINUTE_LIMIT,
+  LLM_HISTORY_LIMIT,
+  MAX_USER_CONTENT_CHARS,
+} from "./limits";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const PROFILE_UNAVAILABLE = "暂时无法开始对话，请稍后重试";
+const RATE_LIMIT_MESSAGE = "今天聊得够多啦，明天再来吧 ☕";
+
+const memoryHits = new Map<string, number[]>();
 
 export function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
 
-export function normalizeUserContent(raw: unknown): string | null {
-  if (typeof raw !== "string") return null;
+export type UserContentResult =
+  | { ok: true; content: string }
+  | { ok: false; reason: "empty" | "too_long" };
+
+export function normalizeUserContent(raw: unknown): UserContentResult {
+  if (typeof raw !== "string") return { ok: false, reason: "empty" };
   const trimmed = raw.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, MAX_USER_CONTENT_CHARS);
+  if (!trimmed) return { ok: false, reason: "empty" };
+  if (trimmed.length > MAX_USER_CONTENT_CHARS) {
+    return { ok: false, reason: "too_long" };
+  }
+  return { ok: true, content: trimmed };
 }
 
 export type PersistenceFailure = {
@@ -25,6 +48,66 @@ export type PersistenceFailure = {
   error: string;
   message: string;
 };
+
+export function generateNickname(): string {
+  return `u_${randomBytes(8).toString("hex")}`;
+}
+
+export async function ensureAnonymousProfile(
+  admin: SupabaseClient,
+  deviceId: string
+): Promise<{ ok: true } | PersistenceFailure> {
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("id", deviceId)
+    .maybeSingle();
+
+  if (profileErr) {
+    const hint =
+      profileErr.code === "PGRST205" ||
+      profileErr.message?.includes("schema cache") ||
+      profileErr.message?.includes("does not exist")
+        ? "数据库表尚未创建。请在 Supabase SQL Editor 中执行 components/myAgent/schema.sql。"
+        : PROFILE_UNAVAILABLE;
+    return { ok: false, status: 500, error: "db_error", message: hint };
+  }
+
+  if (profile) return { ok: true };
+
+  for (let attempt = 0; attempt < PROFILE_NICKNAME_MAX_ATTEMPTS; attempt += 1) {
+    const { error: insertErr } = await admin.from("profiles").insert({
+      id: deviceId,
+      nickname: generateNickname(),
+    });
+
+    if (!insertErr) return { ok: true };
+
+    if (insertErr.code === "23505") {
+      const { data: raced } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("id", deviceId)
+        .maybeSingle();
+      if (raced) return { ok: true };
+      continue;
+    }
+
+    return {
+      ok: false,
+      status: 500,
+      error: "db_error",
+      message: PROFILE_UNAVAILABLE,
+    };
+  }
+
+  return {
+    ok: false,
+    status: 503,
+    error: "db_error",
+    message: PROFILE_UNAVAILABLE,
+  };
+}
 
 export async function resolveOwnedConversation(
   admin: SupabaseClient,
@@ -111,6 +194,64 @@ export async function insertConversationMessage(
   return { ok: true };
 }
 
+export async function loadOwnedHistory(
+  admin: SupabaseClient,
+  deviceId: string,
+  conversationId: string
+): Promise<
+  | {
+      ok: true;
+      messages: {
+        id: string;
+        role: "user" | "assistant";
+        content: string;
+        created_at: string;
+      }[];
+    }
+  | PersistenceFailure
+> {
+  const owned = await resolveOwnedConversation(admin, deviceId, conversationId);
+  if (!owned.ok) return owned;
+
+  const { data, error } = await admin
+    .from("messages")
+    .select("id, role, content, created_at")
+    .eq("conversation_id", owned.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return {
+      ok: false,
+      status: 500,
+      error: "db_error",
+      message: `读取对话失败：${error.message}`,
+    };
+  }
+
+  const messages = (data ?? []).flatMap((row) => {
+    if (
+      (row.role !== "user" && row.role !== "assistant") ||
+      typeof row.content !== "string" ||
+      typeof row.id !== "string"
+    ) {
+      return [];
+    }
+    return [
+      {
+        id: row.id,
+        role: row.role,
+        content: row.content,
+        created_at:
+          typeof row.created_at === "string"
+            ? row.created_at
+            : new Date().toISOString(),
+      },
+    ];
+  });
+
+  return { ok: true, messages };
+}
+
 export async function loadLlmHistory(
   admin: SupabaseClient,
   conversationId: string
@@ -141,7 +282,12 @@ export async function loadLlmHistory(
       ) {
         return [];
       }
-      return [{ role: row.role, content: row.content.slice(0, MAX_USER_CONTENT_CHARS) }];
+      return [
+        {
+          role: row.role,
+          content: row.content.slice(0, MAX_USER_CONTENT_CHARS),
+        },
+      ];
     });
 
   return { ok: true, messages };
@@ -154,51 +300,84 @@ function startOfShanghaiDayIso(): string {
   return new Date(dayStartShanghai - shanghaiOffsetMs).toISOString();
 }
 
-export async function assertWithinDailyLimit(
+function startOfUtcMinuteIso(): string {
+  const now = Date.now();
+  return new Date(now - (now % 60_000)).toISOString();
+}
+
+function assertMemoryWindow(
+  ipHash: string,
+  windowMs: number,
+  limit: number
+): boolean {
+  const now = Date.now();
+  const key = `${ipHash}:${windowMs}`;
+  const recent = (memoryHits.get(key) ?? []).filter((ts) => now - ts < windowMs);
+  if (recent.length >= limit) {
+    memoryHits.set(key, recent);
+    return false;
+  }
+  recent.push(now);
+  memoryHits.set(key, recent);
+  return true;
+}
+
+async function bumpPersistedWindow(
   admin: SupabaseClient,
-  deviceId: string
-): Promise<{ ok: true } | PersistenceFailure> {
-  const { data: conversations, error: convErr } = await admin
-    .from("conversations")
-    .select("id")
-    .eq("profile_id", deviceId);
+  ipHash: string,
+  windowStart: string,
+  limit: number
+): Promise<{ ok: true } | PersistenceFailure | "unavailable"> {
+  const { data, error } = await admin.rpc("bump_chat_rate_limit", {
+    p_ip_hash: ipHash,
+    p_window_start: windowStart,
+  });
 
-  if (convErr) {
-    return {
-      ok: false,
-      status: 500,
-      error: "db_error",
-      message: `读取对话失败：${convErr.message}`,
-    };
-  }
+  if (error) return "unavailable";
 
-  const ids = (conversations ?? []).map((row) => row.id as string);
-  if (!ids.length) return { ok: true };
-
-  const { count, error } = await admin
-    .from("messages")
-    .select("id", { count: "exact", head: true })
-    .in("conversation_id", ids)
-    .eq("role", "user")
-    .gte("created_at", startOfShanghaiDayIso());
-
-  if (error) {
-    return {
-      ok: false,
-      status: 500,
-      error: "db_error",
-      message: `读取对话失败：${error.message}`,
-    };
-  }
-
-  if ((count ?? 0) >= DAILY_USER_MESSAGE_LIMIT) {
+  if (typeof data === "number" && data > limit) {
     return {
       ok: false,
       status: 429,
       error: "rate_limit",
-      message: "今天聊得够多啦，明天再来吧 ☕",
+      message: RATE_LIMIT_MESSAGE,
     };
   }
+
+  return { ok: true };
+}
+
+export async function assertWithinIpLimit(
+  admin: SupabaseClient,
+  ipHash: string
+): Promise<{ ok: true } | PersistenceFailure> {
+  if (
+    !assertMemoryWindow(ipHash, 60_000, IP_MINUTE_LIMIT) ||
+    !assertMemoryWindow(ipHash, 86_400_000, IP_DAILY_LIMIT)
+  ) {
+    return {
+      ok: false,
+      status: 429,
+      error: "rate_limit",
+      message: RATE_LIMIT_MESSAGE,
+    };
+  }
+
+  const minute = await bumpPersistedWindow(
+    admin,
+    ipHash,
+    startOfUtcMinuteIso(),
+    IP_MINUTE_LIMIT
+  );
+  if (minute !== "unavailable" && !minute.ok) return minute;
+
+  const day = await bumpPersistedWindow(
+    admin,
+    ipHash,
+    startOfShanghaiDayIso(),
+    IP_DAILY_LIMIT
+  );
+  if (day !== "unavailable" && !day.ok) return day;
 
   return { ok: true };
 }

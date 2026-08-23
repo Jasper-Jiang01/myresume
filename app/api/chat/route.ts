@@ -17,7 +17,6 @@ import type {
   ChatCompletionMessageParam,
   ChatCompletionToolMessageParam,
 } from "openai/resources/chat/completions";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import {
   AGENT_STREAM_HEADERS,
   consumeChatStream,
@@ -26,13 +25,17 @@ import {
   type AgentStreamEvent,
 } from "@/components/myAgent/stream";
 import {
-  assertWithinDailyLimit,
+  assertWithinIpLimit,
+  ensureAnonymousProfile,
   insertConversationMessage,
   isUuid,
   loadLlmHistory,
   normalizeUserContent,
   resolveOwnedConversation,
 } from "@/components/myAgent/chatPersistence";
+import { getRequestIp, hashIpForRateLimit } from "@/components/myAgent/clientIp";
+import { MAX_CHAT_BODY_BYTES } from "@/components/myAgent/limits";
+import { getSupabaseAdmin } from "@/components/myAgent/supabaseAdmin";
 import {
   AGENT_TOOLS,
   executeAgentTool,
@@ -103,25 +106,28 @@ function buildSystemPrompt(locale: "zh" | "en"): string {
   return [...instructions, knowledge ? `\n---\n${knowledge}` : ""].join("\n");
 }
 
-let supabaseAdmin: SupabaseClient | null = null;
-function getSupabaseAdmin(): SupabaseClient {
-  if (!supabaseAdmin) {
-    // URL 与前端是同一个项目地址，允许回退 NEXT_PUBLIC_SUPABASE_URL。
-    const url = env("SUPABASE_URL") || env("NEXT_PUBLIC_SUPABASE_URL");
-    const serviceRoleKey = env("SUPABASE_SERVICE_ROLE_KEY");
-    const missing: string[] = [];
-    if (!url) missing.push("SUPABASE_URL（或 NEXT_PUBLIC_SUPABASE_URL）");
-    if (!serviceRoleKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
-    if (missing.length) {
-      throw new Error(`缺少环境变量：${missing.join("、")}`);
-    }
-    supabaseAdmin = createClient(url, serviceRoleKey);
-  }
-  return supabaseAdmin;
-}
-
 export async function POST(req: NextRequest) {
   try {
+    const bodyBytes = Number(req.headers.get("content-length") ?? 0);
+    if (bodyBytes > MAX_CHAT_BODY_BYTES) {
+      return NextResponse.json(
+        { error: "invalid_request", message: "单条消息不能超过 2000 字" },
+        { status: 413 }
+      );
+    }
+
+    const admin = getSupabaseAdmin();
+    const ipLimit = await assertWithinIpLimit(
+      admin,
+      hashIpForRateLimit(getRequestIp(req))
+    );
+    if (!ipLimit.ok) {
+      return NextResponse.json(
+        { error: ipLimit.error, message: ipLimit.message },
+        { status: ipLimit.status }
+      );
+    }
+
     const deviceId = req.headers.get("x-device-id")?.trim() ?? "";
     if (!deviceId || !isUuid(deviceId)) {
       return NextResponse.json(
@@ -133,79 +139,34 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       content?: unknown;
       conversationId?: unknown;
-      nickname?: string;
       locale?: unknown;
     };
 
-    const userContent = normalizeUserContent(body.content);
-    if (!userContent) {
+    const parsed = normalizeUserContent(body.content);
+    if (!parsed.ok) {
       return NextResponse.json(
-        { error: "invalid_request", message: "请输入要发送的内容" },
+        {
+          error: "invalid_request",
+          message:
+            parsed.reason === "too_long"
+              ? "单条消息不能超过 2000 字"
+              : "请输入要发送的内容",
+        },
         { status: 400 }
       );
     }
+    const userContent = parsed.content;
 
     const locale = parseLocale(body.locale);
 
     const requestedConversationId =
       typeof body.conversationId === "string" ? body.conversationId.trim() : "";
-    const nickname = body.nickname;
 
-    const admin = getSupabaseAdmin();
-
-    // 1. 确保 profiles 中有该设备记录（昵称可能只存在于浏览器 localStorage）
-    const { data: profile, error: profileErr } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("id", deviceId)
-      .maybeSingle();
-
-    if (profileErr) {
-      const hint =
-        profileErr.code === "PGRST205" ||
-        profileErr.message?.includes("schema cache") ||
-        profileErr.message?.includes("does not exist")
-          ? "数据库表尚未创建。请在 Supabase SQL Editor 中执行 components/myAgent/README.md 里的建表语句。"
-          : `读取用户资料失败：${profileErr.message}`;
+    const profile = await ensureAnonymousProfile(admin, deviceId);
+    if (!profile.ok) {
       return NextResponse.json(
-        { error: "db_error", message: hint },
-        { status: 500 }
-      );
-    }
-
-    if (!profile) {
-      const trimmed = nickname?.trim() ?? "";
-      if (trimmed.length < 1 || trimmed.length > 20) {
-        return NextResponse.json(
-          { error: "auth_error", message: "登录状态已失效，请刷新后重试" },
-          { status: 401 }
-        );
-      }
-
-      const { error: insertErr } = await admin.from("profiles").insert({
-        id: deviceId,
-        nickname: trimmed,
-      });
-
-      if (insertErr) {
-        if (insertErr.code === "23505") {
-          return NextResponse.json(
-            { error: "auth_error", message: "该昵称已被使用" },
-            { status: 409 }
-          );
-        }
-        return NextResponse.json(
-          { error: "db_error", message: `创建个人信息失败：${insertErr.message}` },
-          { status: 500 }
-        );
-      }
-    }
-
-    const rate = await assertWithinDailyLimit(admin, deviceId);
-    if (!rate.ok) {
-      return NextResponse.json(
-        { error: rate.error, message: rate.message },
-        { status: rate.status }
+        { error: profile.error, message: profile.message },
+        { status: profile.status }
       );
     }
 
