@@ -162,7 +162,7 @@ html.theme-fading .theme-fade-overlay {
   }
   42%,
   58% {
-    color: var(--chat-text);
+    color: var(--chat-text-muted);
   }
 }
 
