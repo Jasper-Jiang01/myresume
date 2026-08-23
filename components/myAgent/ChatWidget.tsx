@@ -148,14 +148,10 @@ export default function ChatWidget() {
     });
   }, [messages, isStreaming, isExpanded]);
 
-  const showHeader =
-    hovered ||
-    focused ||
-    isExpanded ||
-    isSubmittingNickname ||
-    isStreaming ||
-    Boolean(error);
   const hasMessages = messages.length > 0;
+  const showHeader =
+    hovered || focused || isPinned || isSubmittingNickname;
+  const showTranscript = hasMessages && isExpanded && showHeader;
   const canSend =
     Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
 
@@ -175,18 +171,14 @@ export default function ChatWidget() {
       : copy.chat.askAnything
     : copy.chat.askAnything;
 
-  const widthClass = isExpanded
+  const widthClass = showTranscript
     ? "w-[560px]"
     : showHeader
       ? "w-[480px]"
       : "w-[360px]";
 
-  const bodyHeightClass = isExpanded
-    ? "h-[390px]"
-    : showHeader
-      ? "h-[99px]"
-      : "h-[48px]";
-
+  const bodyHeightClass = showHeader ? "h-[99px]" : "h-[48px]";
+  const headerRows = showTranscript ? "321px" : showHeader ? "30px" : "0fr";
   const isCompact = !showHeader;
 
   return (
@@ -200,76 +192,83 @@ export default function ChatWidget() {
         className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${showHeader ? "bg-[var(--chat-bg-active)]" : ""}`}
         style={{ transitionTimingFunction: EASE }}
       >
-        {/* Header — CSS grid 0fr/1fr 做展开收起 */}
+        {/* Header：问候条；发消息后向上撑开成对话区 */}
         <div
           className="grid transition-[grid-template-rows] duration-[360ms]"
           style={{
-            gridTemplateRows: showHeader ? "30px" : "0fr",
+            gridTemplateRows: headerRows,
             transitionTimingFunction: EASE,
           }}
         >
           <div className="min-h-0 overflow-hidden">
-            <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)]">
-              <p
-                className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
-                aria-live="polite"
-              >
-                {headerText}
-              </p>
-            </header>
+            {showTranscript ? (
+              <div className="relative flex h-[321px] min-h-0 flex-col px-3 pb-1 pt-3">
+                <IconButton
+                  label={copy.chat.collapse}
+                  disabled={isPinned}
+                  onClick={() => setIsExpanded(false)}
+                  className="absolute right-3 top-3 z-10"
+                >
+                  <CollapseIcon />
+                </IconButton>
+                <div className="min-h-0 flex-1 overflow-y-auto pr-8">
+                  <div className="flex flex-col gap-3 py-1">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
+                            msg.role === "user"
+                              ? "bg-[var(--chat-user-bg)] text-[var(--chat-user-fg)]"
+                              : "bg-[var(--chat-assistant-bg)] text-[var(--chat-text)] shadow-sm"
+                          }`}
+                        >
+                          {msg.content || (
+                            <span className="text-[var(--chat-placeholder)]">
+                              {isStreaming ? (
+                                <ThinkingText text={copy.chat.thinking} />
+                              ) : (
+                                "…"
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <header className="relative z-10 flex h-[30px] w-full shrink-0 items-center gap-1 overflow-hidden px-2 pb-0.5 pt-1 text-[14px] leading-6 text-[var(--chat-text-secondary)]">
+                <p
+                  className={`min-w-0 flex-1 truncate px-2 ${error ? "text-red-500" : ""}`}
+                  aria-live="polite"
+                >
+                  {headerText}
+                </p>
+                {nickname && hasMessages && (
+                  <IconButton
+                    label={copy.chat.expand}
+                    onClick={() => setIsExpanded(true)}
+                  >
+                    <ExpandIcon />
+                  </IconButton>
+                )}
+              </header>
+            )}
           </div>
         </div>
 
-        {/* Body: messages + composer */}
+        {/* Body: composer */}
         <div
           className={`relative flex w-full shrink-0 flex-col rounded-[15px] border-t-[0.5px] border-[var(--chat-border)] bg-[var(--chat-bg)] px-3 py-3 transition-[height,border-radius] duration-[360ms] ${
             isCompact ? "justify-center" : ""
           } ${bodyHeightClass}`}
           style={{ transitionTimingFunction: EASE }}
         >
-          {nickname && showHeader && (
-            <IconButton
-              label={isExpanded ? copy.chat.collapse : copy.chat.expand}
-              disabled={isPinned && isExpanded}
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="absolute right-3 top-3 z-10"
-            >
-              {isExpanded ? <CollapseIcon /> : <ExpandIcon />}
-            </IconButton>
-          )}
-
-          {isExpanded && hasMessages && (
-            <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-8">
-              <div className="flex flex-col gap-3 py-1">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-[var(--chat-user-bg)] text-[var(--chat-user-fg)]"
-                          : "bg-[var(--chat-assistant-bg)] text-[var(--chat-text)] shadow-sm"
-                      }`}
-                    >
-                      {msg.content || (
-                        <span className="text-[var(--chat-placeholder)]">
-                          {isStreaming ? (
-                            <ThinkingText text={copy.chat.thinking} />
-                          ) : (
-                            "…"
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          )}
-
           <textarea
             ref={textareaRef}
             value={input}
@@ -283,22 +282,19 @@ export default function ChatWidget() {
               }
             }}
             placeholder={placeholder}
-            disabled={isSubmittingNickname || isStreaming}
+            disabled={isSubmittingNickname}
+            readOnly={isStreaming}
             maxLength={nickname ? undefined : 20}
             rows={1}
             aria-label={copy.chat.inputLabel}
             className={`w-full resize-none bg-transparent pl-1 pr-7 text-[16px] leading-6 text-[var(--chat-text)] outline-none placeholder:text-[var(--chat-placeholder)] disabled:cursor-not-allowed ${
-              isCompact
-                ? "h-6 shrink-0"
-                : isExpanded && hasMessages
-                  ? "h-[72px] shrink-0 pb-6"
-                  : "min-h-0 flex-1 pb-6"
+              isCompact ? "h-6 shrink-0" : "min-h-0 flex-1 pb-6"
             }`}
           />
 
           <div
             className={`absolute bottom-3 left-3 flex h-6 items-center gap-1 transition-[opacity,transform] duration-200 ease-out ${
-              nickname && isExpanded
+              nickname && isExpanded && showHeader
                 ? "translate-y-0 opacity-100 delay-100"
                 : "pointer-events-none translate-y-1 opacity-0"
             }`}
