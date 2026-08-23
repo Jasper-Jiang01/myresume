@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { useChat } from "./useChat";
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+const GREETING_H = 30;
+const TRANSCRIPT_MAX_H = 321;
+const TRANSCRIPT_PAD_Y = 16;
 
 function ExpandIcon() {
   return (
@@ -139,14 +142,10 @@ export default function ChatWidget() {
 
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [transcriptH, setTranscriptH] = useState(GREETING_H);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: isStreaming ? "auto" : "smooth",
-    });
-  }, [messages, isStreaming, isExpanded]);
 
   const hasMessages = messages.length > 0;
   const showHeader =
@@ -154,6 +153,33 @@ export default function ChatWidget() {
   const showTranscript = hasMessages && isExpanded && showHeader;
   const canSend =
     Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
+  const transcriptAtMax = transcriptH >= TRANSCRIPT_MAX_H;
+
+  useLayoutEffect(() => {
+    if (!showTranscript) {
+      setTranscriptH(GREETING_H);
+      return;
+    }
+
+    const el = messagesListRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const next = Math.min(el.scrollHeight + TRANSCRIPT_PAD_Y, TRANSCRIPT_MAX_H);
+      setTranscriptH((prev) => (prev === next ? prev : next));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [showTranscript, messages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isStreaming ? "auto" : "smooth",
+    });
+  }, [messages, isStreaming, isExpanded, transcriptH]);
 
   const headerText = error
     ? error
@@ -178,7 +204,11 @@ export default function ChatWidget() {
       : "w-[360px]";
 
   const bodyHeightClass = showHeader ? "h-[99px]" : "h-[48px]";
-  const headerRows = showTranscript ? "321px" : showHeader ? "30px" : "0fr";
+  const headerRows = showTranscript
+    ? `${transcriptH}px`
+    : showHeader
+      ? `${GREETING_H}px`
+      : "0fr";
   const isCompact = !showHeader;
 
   return (
@@ -202,7 +232,7 @@ export default function ChatWidget() {
         >
           <div className="min-h-0 overflow-hidden">
             {showTranscript ? (
-              <div className="relative flex h-[321px] min-h-0 flex-col px-3 pb-1 pt-3">
+              <div className="relative flex h-full min-h-0 flex-col px-3 pb-1 pt-3">
                 <IconButton
                   label={copy.chat.collapse}
                   disabled={isPinned}
@@ -211,8 +241,12 @@ export default function ChatWidget() {
                 >
                   <CollapseIcon />
                 </IconButton>
-                <div className="min-h-0 flex-1 overflow-y-auto pr-8">
-                  <div className="flex flex-col gap-3 py-1">
+                <div
+                  className={`min-h-0 flex-1 pr-8 ${
+                    transcriptAtMax ? "overflow-y-auto" : "overflow-hidden"
+                  }`}
+                >
+                  <div ref={messagesListRef} className="flex flex-col gap-3 py-1">
                     {messages.map((msg) => (
                       <div
                         key={msg.id}
@@ -283,7 +317,6 @@ export default function ChatWidget() {
             }}
             placeholder={placeholder}
             disabled={isSubmittingNickname}
-            readOnly={isStreaming}
             maxLength={nickname ? undefined : 20}
             rows={1}
             aria-label={copy.chat.inputLabel}
