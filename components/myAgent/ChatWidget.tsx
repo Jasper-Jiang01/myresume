@@ -5,6 +5,7 @@ import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { useChat } from "./useChat";
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+const MOTION_MS = 360;
 const GREETING_H = 30;
 const TRANSCRIPT_MAX_H = 321;
 const TRANSCRIPT_PAD_Y = 16;
@@ -143,17 +144,31 @@ export default function ChatWidget() {
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [transcriptH, setTranscriptH] = useState(GREETING_H);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [wideOpen, setWideOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const hasMessages = messages.length > 0;
-  const showHeader =
+  const wantsOpen =
     hovered || focused || isPinned || isSubmittingNickname;
-  const showTranscript = hasMessages && isExpanded && showHeader;
+  const showTranscript = hasMessages && isExpanded && wideOpen;
   const canSend =
     Boolean(input.trim()) && !isStreaming && !isSubmittingNickname;
   const transcriptAtMax = transcriptH >= TRANSCRIPT_MAX_H;
+
+  useEffect(() => {
+    if (wantsOpen) {
+      setWideOpen(true);
+      setPanelOpen(true);
+      return;
+    }
+
+    setPanelOpen(false);
+    const timer = window.setTimeout(() => setWideOpen(false), MOTION_MS);
+    return () => window.clearTimeout(timer);
+  }, [wantsOpen]);
 
   useLayoutEffect(() => {
     if (!showTranscript) {
@@ -197,19 +212,17 @@ export default function ChatWidget() {
       : copy.chat.askAnything
     : copy.chat.askAnything;
 
-  const widthClass = showTranscript
-    ? "w-[560px]"
-    : showHeader
-      ? "w-[480px]"
-      : "w-[360px]";
+  const widthClass = !wideOpen
+    ? "w-[360px]"
+    : hasMessages && isExpanded
+      ? "w-[560px]"
+      : "w-[480px]";
 
-  const bodyHeightClass = showHeader ? "h-[99px]" : "h-[48px]";
-  const headerRows = showTranscript
-    ? `${transcriptH}px`
-    : showHeader
-      ? `${GREETING_H}px`
-      : "0fr";
-  const isCompact = !showHeader;
+  const bodyHeightClass = panelOpen ? "h-[99px]" : "h-[48px]";
+  const headerRows = panelOpen
+    ? `${showTranscript ? transcriptH : GREETING_H}px`
+    : "0px";
+  const isCompact = !panelOpen;
 
   return (
     <section
@@ -219,7 +232,7 @@ export default function ChatWidget() {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${showHeader ? "bg-[var(--chat-bg-active)]" : ""}`}
+        className={`relative flex flex-col justify-end overflow-hidden rounded-[16px] border border-[var(--chat-border)] bg-[var(--chat-bg)] font-sans shadow-[var(--chat-shadow)] backdrop-blur-[24px] backdrop-saturate-150 transition-[width,background-color,border-color] duration-[360ms] ${widthClass} ${wideOpen ? "bg-[var(--chat-bg-active)]" : ""}`}
         style={{ transitionTimingFunction: EASE }}
       >
         {/* Header：问候条；发消息后向上撑开成对话区 */}
@@ -327,7 +340,7 @@ export default function ChatWidget() {
 
           <div
             className={`absolute bottom-3 left-3 flex h-6 items-center gap-1 transition-[opacity,transform] duration-200 ease-out ${
-              nickname && isExpanded && showHeader
+              nickname && isExpanded && panelOpen
                 ? "translate-y-0 opacity-100 delay-100"
                 : "pointer-events-none translate-y-1 opacity-0"
             }`}
