@@ -140,6 +140,38 @@ html.theme-fading .theme-fade-overlay {
   }
 }
 
+.thinking-text {
+  display: inline;
+  color: var(--chat-placeholder);
+}
+
+.thinking-text-char {
+  display: inline-block;
+  color: var(--chat-placeholder);
+  animation-name: thinking-char;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-duration: max(1.5s, calc(var(--n) * 0.12s));
+  animation-delay: calc(var(--i) * 0.12s);
+}
+
+@keyframes thinking-char {
+  0%,
+  100% {
+    color: var(--chat-placeholder);
+  }
+  42%,
+  58% {
+    color: var(--chat-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-text-char {
+    animation: none;
+  }
+}
+
 html,
 body {
   min-height: 100%;

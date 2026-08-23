@@ -46,7 +46,7 @@ export const messages = {
       thinking: "文喆正在思考中",
       savingNickname: "正在记录昵称…",
       replying: "正在回复…",
-      chatting: "和文喆的小助手聊天",
+      chatting: "你好! 我是文喆的小助手，有什么可以帮你的吗？",
       askNickname: "取个昵称再开始吧",
       nicknameHint: "1~20个字符, 账号基于访问设备记录哦…",
       askAnything: "Ask me anything…",
@@ -119,7 +119,8 @@ export const messages = {
         device: "Failed to initialize device ID",
         nicknameTaken: "That nickname is taken",
         profile: "Failed to create profile",
-        convTimeout: "Timed out creating the conversation. Check Supabase and retry.",
+        convTimeout:
+          "Timed out creating the conversation. Check Supabase and retry.",
         save: "Failed to save the message. Please retry.",
         rateLimit: "That's enough for today — come back tomorrow ☕",
         distracted: "Wenzhe zoned out. Try again in a bit…",

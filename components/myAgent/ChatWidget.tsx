@@ -58,6 +58,25 @@ function NewChatIcon() {
   );
 }
 
+function ThinkingText({ text }: { text: string }) {
+  const chars = Array.from(text);
+
+  return (
+    <span className="thinking-text" aria-label={text}>
+      {chars.map((char, i) => (
+        <span
+          key={`${char}-${i}`}
+          className="thinking-text-char"
+          style={{ "--i": i, "--n": chars.length } as React.CSSProperties}
+          aria-hidden
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function SendIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -235,8 +254,12 @@ export default function ChatWidget() {
                       }`}
                     >
                       {msg.content || (
-                        <span className="inline-flex animate-pulse text-[var(--chat-placeholder)]">
-                          {isStreaming ? copy.chat.thinking : "…"}
+                        <span className="text-[var(--chat-placeholder)]">
+                          {isStreaming ? (
+                            <ThinkingText text={copy.chat.thinking} />
+                          ) : (
+                            "…"
+                          )}
                         </span>
                       )}
                     </div>
