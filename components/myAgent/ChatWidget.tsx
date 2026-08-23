@@ -298,11 +298,11 @@ export default function ChatWidget() {
             aria-label={copy.chat.send}
             disabled={!canSend}
             onClick={sendMessage}
-            className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-[var(--chat-btn)] p-1 text-[10px] text-[var(--chat-text-muted)] transition-colors hover:text-[var(--chat-text)] disabled:opacity-35 ${
+            className={`absolute right-3 inline-flex size-fit items-center justify-center rounded-[6px] bg-[var(--chat-btn)] p-1 text-[10px] text-[var(--chat-btn-fg)] transition-opacity hover:opacity-85 disabled:opacity-35 ${
               isCompact ? "top-1/2 -translate-y-1/2" : "bottom-3"
             }`}
           >
-            <span className="inline-flex size-4 items-center justify-center opacity-80">
+            <span className="inline-flex size-4 items-center justify-center">
               <SendIcon />
             </span>
           </button>
