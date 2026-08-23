@@ -96,6 +96,11 @@ const nextConfig = {
   // 本身也不支持自定义响应头；这组头只在 next dev / next start / Vercel 生效。
   ...(!useStaticExport
     ? {
+        experimental: {
+          outputFileTracingIncludes: {
+            "/api/chat": ["./components/myAgent/infomation.md"],
+          },
+        },
         async headers() {
           return [
             {

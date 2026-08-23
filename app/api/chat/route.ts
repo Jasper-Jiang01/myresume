@@ -69,18 +69,18 @@ function env(name: string): string {
   return (process.env[name] ?? "").trim();
 }
 
-let knowledgeCache: string | null = null;
-function getKnowledge(): string {
-  if (knowledgeCache !== null) return knowledgeCache;
+let personaCache: string | null = null;
+function getPersona(): string {
+  if (personaCache !== null) return personaCache;
   try {
-    knowledgeCache = readFileSync(
-      join(process.cwd(), "components/myAgent/KNOWLEDGE.md"),
+    personaCache = readFileSync(
+      join(process.cwd(), "components/myAgent/infomation.md"),
       "utf8"
     );
   } catch {
-    knowledgeCache = "";
+    personaCache = "";
   }
-  return knowledgeCache;
+  return personaCache;
 }
 
 function parseLocale(raw: unknown): "zh" | "en" {
@@ -88,22 +88,16 @@ function parseLocale(raw: unknown): "zh" | "en" {
 }
 
 function buildSystemPrompt(locale: "zh" | "en"): string {
-  const knowledge = getKnowledge();
-  const instructions =
+  const persona = getPersona();
+  const localeRule =
     locale === "en"
-      ? [
-          "You are the assistant on Jiang Wenzhe's personal site. Speak in a concise, friendly, female voice, like a colleague who knows his work.",
-          "Reply in English. Only use the knowledge table below for his experience, skills, and projects; if it is not there, say you are not sure. Do not invent facts.",
-          "You can point visitors to Home, /personalProject, and /mycrafts.",
-          "When the visitor clearly asks to open, jump to, or be taken to a project or page, call open_project. Do not just drop a link. Do not call it when only introducing a project.",
-        ]
-      : [
-          "你是蒋文喆个人网站上的小助手，女性口吻，简洁友善，像熟悉他作品的同事。",
-          "用中文回答访客。只依据下方知识表介绍他的经历、技能和项目；知识表没有的信息就说不确定，不要编造。",
-          "可以引导访客去看首页、/personalProject 作品集、/mycrafts 动效实验站。",
-          "当访客明确要求打开、跳转、带去看某个项目或页面时，调用 open_project 工具，不要只丢链接让对方自己点。介绍项目时不要调用该工具。",
-        ];
-  return [...instructions, knowledge ? `\n---\n${knowledge}` : ""].join("\n");
+      ? "Language for this turn: English. Keep the same voice — short, first-person, opinionated. Do not translate the Chinese persona word-for-word."
+      : "本轮语言：中文。";
+  const toolRule =
+    locale === "en"
+      ? "Tools: when the visitor clearly wants to open or be taken to a page, call open_project. Do not print a JSON navigate payload in the reply. Do not call it when you are only introducing a project."
+      : "工具落地：访客明确要打开、跳转、带去看某页时，调用 open_project；不要在回复文本里输出 {\"action\":\"navigate\"...}。只介绍项目时不要调用。";
+  return [persona, localeRule, toolRule].filter(Boolean).join("\n\n");
 }
 
 export async function POST(req: NextRequest) {
