@@ -1,26 +1,35 @@
+/**
+ * Agent 流式协议。
+ * 服务端：编码 SSE、消费 OpenAI chunk、组装 tool_calls。
+ * 客户端：解析 SSE，并把 navigate 事件限制在白名单内。
+ */
 import type {
   ChatCompletionChunk,
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
-import { resolveAllowedNavigate, type AgentNavigateAction } from "./tools";
+import { resolveAllowedNavigate, type AgentNavigateAction } from "../tools";
 
+/** 推给前端的 SSE 事件 */
 export type AgentStreamEvent =
   | { type: "token"; text: string }
   | ({ type: "navigate" } & AgentNavigateAction)
   | { type: "error"; message: string }
   | { type: "done" };
 
+/** 从流式 delta 拼好的一次 function tool call */
 export type AssembledToolCall = {
   id: string;
   type: "function";
   function: { name: string; arguments: string };
 };
 
+/** 一轮 Chat Completions 流结束后的文本 + tool_calls */
 export type ConsumedChatStream = {
   content: string;
   toolCalls: AssembledToolCall[];
 };
 
+/** SSE 响应头：禁止代理缓冲，保证 token 能边生成边下发 */
 export const AGENT_STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-cache, no-transform",
@@ -28,10 +37,12 @@ export const AGENT_STREAM_HEADERS = {
   "X-Accel-Buffering": "no",
 } as const;
 
+/** 把事件编码成 `data: ...\\n\\n` SSE 帧 */
 export function encodeAgentStreamEvent(event: AgentStreamEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
 }
 
+/** 从一块 SSE 文本里抽出 data: 行再交给 parseAgentStreamEvent */
 function parseAgentStreamBlock(block: string): AgentStreamEvent | null {
   const dataLine = block
     .replace(/\r\n/g, "\n")
@@ -49,6 +60,7 @@ function parseAgentStreamBlock(block: string): AgentStreamEvent | null {
   }
 }
 
+/** 校验并解析一条 SSE JSON；navigate 必须落在站点白名单内 */
 export function parseAgentStreamEvent(value: unknown): AgentStreamEvent | null {
   if (!value || typeof value !== "object") return null;
   const record = value as { type?: unknown };
@@ -80,6 +92,7 @@ export function parseAgentStreamEvent(value: unknown): AgentStreamEvent | null {
   return null;
 }
 
+/** 客户端读取 /api/chat 的 SSE body，按事件回调 */
 export async function readAgentStream(
   body: ReadableStream<Uint8Array>,
   onEvent: (event: AgentStreamEvent) => void,
@@ -137,6 +150,7 @@ export async function readAgentStream(
   }
 }
 
+/** 服务端消费 OpenAI 流：拼接文本，并按 index 组装 tool_calls */
 export async function consumeChatStream(
   stream: AsyncIterable<ChatCompletionChunk>,
   onContent?: (text: string) => void
@@ -186,6 +200,7 @@ export async function consumeChatStream(
   };
 }
 
+/** 把已消费的流转成带 tool_calls 的 assistant 消息，供第二轮 followup 使用 */
 export function toAssistantToolMessage(
   consumed: ConsumedChatStream
 ): ChatCompletionMessageParam {

@@ -71,4 +71,5 @@ export const PROJECT_LINKS: readonly ProjectLink[] = [
   },
 ] as const;
 
+/** 供 JSON schema enum 使用的页面 id 列表 */
 export const PROJECT_LINK_IDS = PROJECT_LINKS.map((item) => item.id);

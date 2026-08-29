@@ -1,15 +1,24 @@
+/**
+ * 客户端会话 Hook。
+ * 管 device_id、乐观消息、拉历史、读 SSE、展开/钉住。
+ * 不写 Supabase；user / assistant 均由 /api/chat 落库。
+ */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { withBasePath } from "@/lib/paths";
-import { MAX_USER_CONTENT_CHARS } from "./limits";
-import { readAgentStream } from "./stream";
-import type { Message } from "./types";
+import { MAX_USER_CONTENT_CHARS } from "./core/config";
+import { readAgentStream } from "./core/stream";
+import type { Message } from "./states/types";
 
+/** localStorage：匿名设备身份，对应服务端 profiles.id */
 const DEVICE_ID_KEY = "myAgent_device_id";
+/** 旧版昵称缓存，401 时清除 */
 const NICKNAME_KEY = "myAgent_nickname";
+/** 当前会话 id，对应 conversations.id */
 const CONVERSATION_ID_KEY = "myAgent_conversation_id";
 
+/** 用户主动取消 fetch 时不当成发送失败 */
 function isAbortError(err: unknown): boolean {
   return (
     (err instanceof DOMException || err instanceof Error) &&
@@ -17,6 +26,7 @@ function isAbortError(err: unknown): boolean {
   );
 }
 
+/** 首次访问生成 UUID，之后一直用 localStorage 里的 device_id */
 function getDeviceId(): string {
   if (typeof window === "undefined") return "";
   let id = localStorage.getItem(DEVICE_ID_KEY);
@@ -27,6 +37,7 @@ function getDeviceId(): string {
   return id;
 }
 
+/** 对话框对外状态：消息、输入、流式、展开/钉住 */
 export interface UseChatReturn {
   messages: Message[];
   input: string;
@@ -42,6 +53,7 @@ export interface UseChatReturn {
   startNewConversation: () => void;
 }
 
+/** 客户端会话入口；挂载时 hydrate device_id 并尝试拉历史 */
 export function useChat(): UseChatReturn {
   const router = useRouter();
   const { messages: copy, locale } = usePreferences();
@@ -76,6 +88,7 @@ export function useChat(): UseChatReturn {
     };
   }, []);
 
+  /** 用本地 conversationId + device_id 拉服务端历史；403 则丢掉脏会话 id */
   const loadHistory = useCallback(async () => {
     if (typeof window === "undefined") return;
     const convId = localStorage.getItem(CONVERSATION_ID_KEY);
@@ -120,6 +133,7 @@ export function useChat(): UseChatReturn {
     if (hydrated) void loadHistory();
   }, [hydrated, loadHistory]);
 
+  /** 中止进行中的流，清本地会话 id 和消息列表 */
   const startNewConversation = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -129,6 +143,7 @@ export function useChat(): UseChatReturn {
     setIsStreaming(false);
   }, []);
 
+  /** 乐观插入气泡，POST /api/chat，按 SSE 追加 token / 执行 navigate */
   const sendMessage = async () => {
     const {
       input: raw,
@@ -277,11 +292,13 @@ export function useChat(): UseChatReturn {
     }
   };
 
+  /** 钉住时强制展开；钉住期间不允许收起 */
   const handleSetPinned = (val: boolean) => {
     setIsPinned(val);
     if (val) setIsExpanded(true);
   };
 
+  /** 已钉住时忽略收起请求 */
   const handleSetExpanded = (val: boolean) => {
     if (isPinned && !val) return;
     setIsExpanded(val);

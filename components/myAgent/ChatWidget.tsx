@@ -1,8 +1,13 @@
 "use client";
 
+/**
+ * 站点底部 AI 对话框。
+ * 玻璃拟态面板：收起 / 展开 / 常驻、消息气泡、输入框。
+ * 会话状态全部来自 useChat，本文件不直接打 API。
+ */
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
-import { MAX_USER_CONTENT_CHARS } from "./limits";
+import { MAX_USER_CONTENT_CHARS } from "./core/config";
 import { useChat } from "./useChat";
 
 /* -------------------------------------------------------------------------- */
@@ -136,6 +141,7 @@ function IconButton({
   );
 }
 
+/** 底部悬浮聊天面板；桌面端展示，状态来自 useChat */
 export default function ChatWidget() {
   /* 文案与对话状态（语言、消息、输入、置顶/展开） */
   const { messages: copy } = usePreferences();

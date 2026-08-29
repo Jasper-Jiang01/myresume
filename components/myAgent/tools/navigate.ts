@@ -4,6 +4,7 @@
 import { PROJECT_LINKS } from "./projectLinks";
 import type { AgentNavigateAction } from "./types";
 
+/** 仅当 href 以单斜杠开头且与 PROJECT_LINKS 完全匹配时放行 */
 export function resolveAllowedNavigate(
   href: unknown,
   internal: unknown
@@ -16,10 +17,12 @@ export function resolveAllowedNavigate(
   return found ? { href: found.href, internal: found.internal } : null;
 }
 
+/** 兼容旧响应头编码；当前主路径走 SSE navigate 事件 */
 export function encodeNavigateHeader(action: AgentNavigateAction): string {
   return encodeURIComponent(JSON.stringify(action));
 }
 
+/** 从响应头还原跳转指令；格式不对时返回 null */
 export function decodeNavigateHeader(
   value: string | null,
 ): AgentNavigateAction | null {

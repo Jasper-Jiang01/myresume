@@ -1,3 +1,8 @@
+/**
+ * 对话持久化与 IP 限流。
+ * 全部走 service_role；浏览器不直连 Data API。
+ * 历史必须先校验 conversations.profile_id === device_id。
+ */
 import { randomBytes } from "crypto";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -7,14 +12,14 @@ import {
   LLM_HISTORY_LIMIT,
   MAX_USER_CONTENT_CHARS,
   PROFILE_NICKNAME_MAX_ATTEMPTS,
-} from "./limits";
+} from "../core/config";
 
 export {
   IP_DAILY_LIMIT,
   IP_MINUTE_LIMIT,
   LLM_HISTORY_LIMIT,
   MAX_USER_CONTENT_CHARS,
-} from "./limits";
+} from "../core/config";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -22,8 +27,10 @@ const UUID_RE =
 const PROFILE_UNAVAILABLE = "暂时无法开始对话，请稍后重试";
 const RATE_LIMIT_MESSAGE = "今天聊得够多啦，明天再来吧 ☕";
 
+/** 进程内限流计数；库表不可用时作为兜底 */
 const memoryHits = new Map<string, number[]>();
 
+/** 校验标准 UUID（含 version 1–8） */
 export function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
@@ -32,6 +39,7 @@ export type UserContentResult =
   | { ok: true; content: string }
   | { ok: false; reason: "empty" | "too_long" };
 
+/** 去掉首尾空白，并拒绝空串 / 超长消息 */
 export function normalizeUserContent(raw: unknown): UserContentResult {
   if (typeof raw !== "string") return { ok: false, reason: "empty" };
   const trimmed = raw.trim();
@@ -42,6 +50,7 @@ export function normalizeUserContent(raw: unknown): UserContentResult {
   return { ok: true, content: trimmed };
 }
 
+/** 持久化失败时的 HTTP 形态，供 route 原样返回 */
 export type PersistenceFailure = {
   ok: false;
   status: number;
@@ -49,10 +58,12 @@ export type PersistenceFailure = {
   message: string;
 };
 
+/** 随机匿名昵称，不采信客户端上报 */
 export function generateNickname(): string {
   return `u_${randomBytes(8).toString("hex")}`;
 }
 
+/** 按 device_id 确保 profiles 行存在；昵称冲突则重试 */
 export async function ensureAnonymousProfile(
   admin: SupabaseClient,
   deviceId: string
@@ -109,6 +120,7 @@ export async function ensureAnonymousProfile(
   };
 }
 
+/** 校验会话归属；未传 conversationId 时新建一轮 */
 export async function resolveOwnedConversation(
   admin: SupabaseClient,
   deviceId: string,
@@ -170,6 +182,7 @@ export async function resolveOwnedConversation(
   return { ok: true, id: data.id as string };
 }
 
+/** 写入一条 user / assistant 消息 */
 export async function insertConversationMessage(
   admin: SupabaseClient,
   conversationId: string,
@@ -194,6 +207,7 @@ export async function insertConversationMessage(
   return { ok: true };
 }
 
+/** 给前端的完整历史：先校验归属再按时间正序返回 */
 export async function loadOwnedHistory(
   admin: SupabaseClient,
   deviceId: string,
@@ -252,6 +266,7 @@ export async function loadOwnedHistory(
   return { ok: true, messages };
 }
 
+/** 给 LLM 的上下文：最近 N 条，不采信前端传来的 history */
 export async function loadLlmHistory(
   admin: SupabaseClient,
   conversationId: string
@@ -293,6 +308,7 @@ export async function loadLlmHistory(
   return { ok: true, messages };
 }
 
+/** 上海时区当天 00:00 的 ISO 时间，用于日限额窗口 */
 function startOfShanghaiDayIso(): string {
   const shanghaiOffsetMs = 8 * 60 * 60 * 1000;
   const shanghaiNow = Date.now() + shanghaiOffsetMs;
@@ -300,11 +316,13 @@ function startOfShanghaiDayIso(): string {
   return new Date(dayStartShanghai - shanghaiOffsetMs).toISOString();
 }
 
+/** UTC 当前分钟起点，用于分钟限额窗口 */
 function startOfUtcMinuteIso(): string {
   const now = Date.now();
   return new Date(now - (now % 60_000)).toISOString();
 }
 
+/** 进程内滑动窗口；超限返回 false */
 function assertMemoryWindow(
   ipHash: string,
   windowMs: number,
@@ -322,6 +340,7 @@ function assertMemoryWindow(
   return true;
 }
 
+/** 调用 bump_chat_rate_limit；表不存在时返回 unavailable，退回内存计数 */
 async function bumpPersistedWindow(
   admin: SupabaseClient,
   ipHash: string,
@@ -347,6 +366,7 @@ async function bumpPersistedWindow(
   return { ok: true };
 }
 
+/** 按 IP 哈希做分钟 / 日限额；先内存再落库 */
 export async function assertWithinIpLimit(
   admin: SupabaseClient,
   ipHash: string

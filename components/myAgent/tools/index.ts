@@ -23,8 +23,10 @@ export {
   resolveAllowedNavigate,
 } from "./navigate";
 
+/** 当前暴露给模型的工具列表；新增工具时在此注册 */
 export const AGENT_TOOLS: ChatCompletionTool[] = [OPEN_PROJECT_TOOL];
 
+/** 按工具名分发；未知名称返回错误 JSON，不抛异常 */
 export function executeAgentTool(
   name: string,
   args: unknown,

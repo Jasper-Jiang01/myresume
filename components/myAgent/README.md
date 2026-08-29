@@ -161,13 +161,18 @@ const nextConfig = {
 
 ```
 components/myAgent/
-├── README.md                 ← 本文档
-├── types.ts                  ← 共享类型
-├── supabaseAdmin.ts          ← 服务端 Supabase（service_role，不进浏览器）
-├── useChat.ts                ← 聊天状态管理 Hook
-└── ChatWidget.tsx            ← 前端 UI 组件（入口）
+├── README.md
+├── schema.sql
+├── infomation.md / KNOWLEDGE.md
+├── ChatWidget.tsx            ← 前端 UI 入口
+├── useChat.ts                ← 客户端会话 Hook
+├── core/                     ← 配置、模型、SSE、Supabase、人设
+├── states/                   ← Agent 状态类型 + 持久化
+├── nodes/                    ← callModel / executeTools / persistAssistant
+├── graphs/                   ← 核心 Agent 图（接线）
+└── tools/                    ← open_project 等工具
 
-app/api/chat/route.ts         ← Next.js API Route（已落地，动态部署下生效）
+app/api/chat/route.ts         ← HTTP 入口：校验后调用 graph
 app/api/chat/history/route.ts ← 历史记录（服务端校验会话归属后返回）
 ```
 
@@ -237,11 +242,12 @@ export default function HomePage() {
 
 | 文件 | 职责 |
 |------|------|
-| `types.ts` | `Message`、`Profile`、`Conversation` 的 TypeScript 类型定义 |
-| `supabaseAdmin.ts` | 服务端 Supabase 客户端；环境变量缺失时抛错 |
+| `states/types.ts` | `Message`、`Profile`、`Conversation` 的 TypeScript 类型定义 |
+| `core/supabaseAdmin.ts` | 服务端 Supabase 客户端；环境变量缺失时抛错 |
+| `graphs/coreAgentGraph.ts` | LLM → 工具 → followup → 落库 的接线 |
 | `useChat.ts` | 核心 Hook：device_id 管理、消息列表、流式接收、错误处理 |
 | `ChatWidget.tsx` | 玻璃拟态 UI：消息气泡、输入框、展开/收起/常驻按钮 |
-| `app/api/chat/route.ts` | Next.js API Route：校验 device_id → 调 LLM → 流式返回 → 落库 |
+| `app/api/chat/route.ts` | Next.js API Route：校验 device_id → 调 graph → 流式返回 |
 | `app/api/chat/history/route.ts` | 按 device_id 校验会话归属后返回历史消息 |
 
 ---

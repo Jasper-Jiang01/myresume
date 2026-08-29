@@ -10,6 +10,7 @@ export type ProjectLink = {
   aliases: readonly string[];
 };
 
+/** open_project 执行结果：成功带回跳转信息，失败带回可选 id */
 export type OpenProjectResult =
   | {
       ok: true;
@@ -24,6 +25,7 @@ export type OpenProjectResult =
       suggestions: string[];
     };
 
+/** 前端收到后用于 router.push 或整页跳转 */
 export type AgentNavigateAction = {
   href: string;
   internal: boolean;

@@ -1,3 +1,7 @@
+-- 聊天表加固脚本（在 Supabase SQL Editor 执行）。
+-- Data API 对 anon / authenticated 零权限；隔离在 /api/chat 用 service_role
+-- 校验 conversations.profile_id = device_id。不要用客户端自报的 device_id 做 RLS。
+--
 -- Chat tables: deny Data API (anon / authenticated).
 -- Isolation is enforced in /api/chat via service_role + profile_id = device_id.
 -- Client-supplied device_id must never be used as an RLS predicate on the anon key.

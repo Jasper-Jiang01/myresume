@@ -6,8 +6,10 @@ import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { PROJECT_LINK_IDS, PROJECT_LINKS } from "./projectLinks";
 import type { OpenProjectResult } from "./types";
 
+/** 与 ChatCompletionTool.function.name 对齐 */
 export const OPEN_PROJECT_NAME = "open_project";
 
+/** 发给模型的 tool schema：id 枚举来自 PROJECT_LINKS */
 export const OPEN_PROJECT_TOOL: ChatCompletionTool = {
   type: "function",
   function: {
@@ -35,6 +37,7 @@ export const OPEN_PROJECT_TOOL: ChatCompletionTool = {
   },
 };
 
+/** 从模型参数里取出 id；兼容参数已是 JSON 字符串的情况 */
 function parseOpenProjectId(args: unknown): string | null {
   if (typeof args === "string") {
     try {
@@ -48,6 +51,7 @@ function parseOpenProjectId(args: unknown): string | null {
   return typeof id === "string" && id.trim() ? id.trim() : null;
 }
 
+/** 解析 id 并映射到白名单页面；未知 id 返回 suggestions */
 export function executeOpenProject(args: unknown): OpenProjectResult {
   const id = parseOpenProjectId(args);
   const found = id ? PROJECT_LINKS.find((item) => item.id === id) : undefined;

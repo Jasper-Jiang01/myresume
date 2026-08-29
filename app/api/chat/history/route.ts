@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isUuid, loadOwnedHistory } from "@/components/myAgent/chatPersistence";
-import { getSupabaseAdmin } from "@/components/myAgent/supabaseAdmin";
+import { getSupabaseAdmin } from "@/components/myAgent/core/supabaseAdmin";
+import { isUuid, loadOwnedHistory } from "@/components/myAgent/states/persistence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

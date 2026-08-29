@@ -1,5 +1,10 @@
+/**
+ * 服务端 Supabase 客户端（service_role）。
+ * 只给 API Route / 持久化层使用，禁止进入浏览器 bundle。
+ */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+/** 与 createModel.env 相同语义，保持本文件无跨 core 依赖 */
 function env(name: string): string {
   return (process.env[name] ?? "").trim();
 }

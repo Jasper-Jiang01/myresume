@@ -9,21 +9,15 @@
  * （next.config.mjs 中 output: "export"）不会打包 API Route。
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import type {
-  ChatCompletionMessageParam,
-  ChatCompletionToolMessageParam,
-} from "openai/resources/chat/completions";
-import {
-  AGENT_STREAM_HEADERS,
-  consumeChatStream,
-  encodeAgentStreamEvent,
-  toAssistantToolMessage,
-  type AgentStreamEvent,
-} from "@/components/myAgent/stream";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { getRequestIp, hashIpForRateLimit } from "@/components/myAgent/core/clientIp";
+import { MAX_CHAT_BODY_BYTES } from "@/components/myAgent/core/config";
+import { env, getOpenAI } from "@/components/myAgent/core/createModel";
+import { buildSystemPrompt, parseLocale } from "@/components/myAgent/core/persona";
+import { AGENT_STREAM_HEADERS } from "@/components/myAgent/core/stream";
+import { getSupabaseAdmin } from "@/components/myAgent/core/supabaseAdmin";
+import { runCoreAgentGraph } from "@/components/myAgent/graphs/coreAgentGraph";
 import {
   assertWithinIpLimit,
   ensureAnonymousProfile,
@@ -32,73 +26,11 @@ import {
   loadLlmHistory,
   normalizeUserContent,
   resolveOwnedConversation,
-} from "@/components/myAgent/chatPersistence";
-import { getRequestIp, hashIpForRateLimit } from "@/components/myAgent/clientIp";
-import { MAX_CHAT_BODY_BYTES } from "@/components/myAgent/limits";
-import { getSupabaseAdmin } from "@/components/myAgent/supabaseAdmin";
-import {
-  AGENT_TOOLS,
-  executeAgentTool,
-  resolveAllowedNavigate,
-  type AgentNavigateAction,
-} from "@/components/myAgent/tools";
+} from "@/components/myAgent/states/persistence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-// 惰性初始化：避免在模块加载阶段（含 GitHub Pages 静态导出构建时的
-// collect-page-data 步骤）因缺失环境变量而抛错中断构建。
-// 该路由仅在配置了对应环境变量的动态部署（如 Vercel）下才会被实际调用。
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    const apiKey = env("OPENAI_API_KEY");
-    if (!apiKey) {
-      throw new Error("缺少环境变量：OPENAI_API_KEY");
-    }
-    openai = new OpenAI({
-      apiKey,
-      baseURL: env("OPENAI_BASE_URL") || "https://api.openai.com/v1",
-    });
-  }
-  return openai;
-}
-
-function env(name: string): string {
-  return (process.env[name] ?? "").trim();
-}
-
-let personaCache: string | null = null;
-function getPersona(): string {
-  if (personaCache !== null) return personaCache;
-  try {
-    personaCache = readFileSync(
-      join(process.cwd(), "components/myAgent/infomation.md"),
-      "utf8"
-    );
-  } catch {
-    personaCache = "";
-  }
-  return personaCache;
-}
-
-function parseLocale(raw: unknown): "zh" | "en" {
-  return raw === "en" ? "en" : "zh";
-}
-
-function buildSystemPrompt(locale: "zh" | "en"): string {
-  const persona = getPersona();
-  const localeRule =
-    locale === "en"
-      ? "Language for this turn: English. Keep the same voice — short, first-person, opinionated. Do not translate the Chinese persona word-for-word."
-      : "本轮语言：中文。";
-  const toolRule =
-    locale === "en"
-      ? "Tools: when the visitor clearly wants to open or be taken to a page, call open_project. Do not print a JSON navigate payload in the reply. Do not call it when you are only introducing a project."
-      : "工具落地：访客明确要打开、跳转、带去看某页时，调用 open_project；不要在回复文本里输出 {\"action\":\"navigate\"...}。只介绍项目时不要调用。";
-  return [persona, localeRule, toolRule].filter(Boolean).join("\n\n");
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -211,96 +143,12 @@ export async function POST(req: NextRequest) {
       ...storedMessages,
     ];
 
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      async start(controller) {
-        const send = (event: AgentStreamEvent) => {
-          try {
-            controller.enqueue(encoder.encode(encodeAgentStreamEvent(event)));
-          } catch {
-            /* client disconnected */
-          }
-        };
-
-        let fullContent = "";
-        try {
-          const firstStream = await openaiClient.chat.completions.create({
-            model,
-            messages: llmMessages,
-            tools: AGENT_TOOLS,
-            tool_choice: "auto",
-            stream: true,
-          });
-
-          const first = await consumeChatStream(firstStream, (text) => {
-            fullContent += text;
-            send({ type: "token", text });
-          });
-
-          if (first.toolCalls.length) {
-            let navigate: AgentNavigateAction | undefined;
-            const toolMessages: ChatCompletionToolMessageParam[] =
-              first.toolCalls.map((call) => {
-                let args: unknown = {};
-                try {
-                  args = JSON.parse(call.function.arguments || "{}");
-                } catch {
-                  args = {};
-                }
-                const executed = executeAgentTool(call.function.name, args);
-                if (executed.navigate) {
-                  navigate = resolveAllowedNavigate(
-                    executed.navigate.href,
-                    executed.navigate.internal
-                  ) ?? undefined;
-                }
-                return {
-                  role: "tool" as const,
-                  tool_call_id: call.id,
-                  content: JSON.stringify(executed.result),
-                };
-              });
-
-            if (navigate) {
-              send({ type: "navigate", ...navigate });
-            }
-
-            const followupStream = await openaiClient.chat.completions.create({
-              model,
-              messages: [
-                ...llmMessages,
-                toAssistantToolMessage(first),
-                ...toolMessages,
-              ],
-              stream: true,
-            });
-
-            await consumeChatStream(followupStream, (text) => {
-              fullContent += text;
-              send({ type: "token", text });
-            });
-          }
-
-          send({ type: "done" });
-
-          if (conversationId && fullContent) {
-            await insertConversationMessage(
-              admin,
-              conversationId,
-              "assistant",
-              fullContent
-            );
-          }
-        } catch (err) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "AI 走神了，晚点再来试试吧…";
-          send({ type: "error", message });
-        } finally {
-          controller.close();
-        }
-      },
+    const readable = runCoreAgentGraph({
+      openaiClient,
+      model,
+      llmMessages,
+      conversationId,
+      admin,
     });
 
     return new Response(readable, {
