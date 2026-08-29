@@ -12,8 +12,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getRequestIp, hashIpForRateLimit } from "@/components/myAgent/core/clientIp";
-import { MAX_CHAT_BODY_BYTES } from "@/components/myAgent/core/config";
-import { env, getOpenAI } from "@/components/myAgent/core/createModel";
+import {
+  MAX_CHAT_BODY_BYTES,
+  shouldEnableThinking,
+} from "@/components/myAgent/core/config";
+import { env } from "@/components/myAgent/core/createModel";
 import { buildSystemPrompt, parseLocale } from "@/components/myAgent/core/persona";
 import { AGENT_STREAM_HEADERS } from "@/components/myAgent/core/stream";
 import { getSupabaseAdmin } from "@/components/myAgent/core/supabaseAdmin";
@@ -131,8 +134,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. 调用 LLM：上下文只来自该会话在库中的消息，不采信前端 history
-    const openaiClient = getOpenAI();
-    const model = env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus";
     const storedMessages = [...history.messages];
     const lastStored = storedMessages[storedMessages.length - 1];
     if (lastStored?.role !== "user" || lastStored.content !== userContent) {
@@ -143,13 +144,15 @@ export async function POST(req: NextRequest) {
       ...storedMessages,
     ];
 
-    const readable = runCoreAgentGraph({
-      openaiClient,
-      model,
-      llmMessages,
-      conversationId,
-      admin,
-    });
+    const readable = runCoreAgentGraph(
+      { messages: llmMessages, conversationId },
+      {
+        model:
+          env("OPENAI_DEFAULT_MODEL") || env("LLM_MODEL") || "qwen3.7-plus",
+        locale,
+        enableThinking: shouldEnableThinking(userContent),
+      }
+    );
 
     return new Response(readable, {
       headers: {
