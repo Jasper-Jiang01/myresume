@@ -1,12 +1,8 @@
 /**
- * Agent 流式协议。
- * 服务端：编码 SSE、消费 OpenAI chunk、组装 tool_calls。
- * 客户端：解析 SSE，并把 navigate 事件限制在白名单内。
+ * Agent 流式协议（前端可安全引用）。
+ * 服务端编码 SSE；客户端解析 SSE，并把 navigate 限制在白名单内。
+ * LangChain 流消费在 langchainStream.ts，避免把 langchain 打进客户端。
  */
-import type {
-  ChatCompletionChunk,
-  ChatCompletionMessageParam,
-} from "openai/resources/chat/completions";
 import { resolveAllowedNavigate, type AgentNavigateAction } from "../tools";
 
 /** 推给前端的 SSE 事件 */
@@ -15,19 +11,6 @@ export type AgentStreamEvent =
   | ({ type: "navigate" } & AgentNavigateAction)
   | { type: "error"; message: string }
   | { type: "done" };
-
-/** 从流式 delta 拼好的一次 function tool call */
-export type AssembledToolCall = {
-  id: string;
-  type: "function";
-  function: { name: string; arguments: string };
-};
-
-/** 一轮 Chat Completions 流结束后的文本 + tool_calls */
-export type ConsumedChatStream = {
-  content: string;
-  toolCalls: AssembledToolCall[];
-};
 
 /** SSE 响应头：禁止代理缓冲，保证 token 能边生成边下发 */
 export const AGENT_STREAM_HEADERS = {
@@ -148,65 +131,4 @@ export async function readAgentStream(
       /* lock already released after cancel */
     }
   }
-}
-
-/** 服务端消费 OpenAI 流：拼接文本，并按 index 组装 tool_calls */
-export async function consumeChatStream(
-  stream: AsyncIterable<ChatCompletionChunk>,
-  onContent?: (text: string) => void
-): Promise<ConsumedChatStream> {
-  let content = "";
-  const toolCalls: AssembledToolCall[] = [];
-
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta;
-    const text = typeof delta?.content === "string" ? delta.content : "";
-    if (text) {
-      content += text;
-      onContent?.(text);
-    }
-
-    const parts = delta?.tool_calls;
-    if (!parts?.length) continue;
-
-    for (const part of parts) {
-      const index = part.index;
-      const current = toolCalls[index];
-      if (!current) {
-        toolCalls[index] = {
-          id: part.id ?? "",
-          type: "function",
-          function: {
-            name: part.function?.name ?? "",
-            arguments: part.function?.arguments ?? "",
-          },
-        };
-        continue;
-      }
-      if (part.id) current.id = part.id;
-      if (part.function?.name) current.function.name += part.function.name;
-      if (part.function?.arguments) {
-        current.function.arguments += part.function.arguments;
-      }
-    }
-  }
-
-  return {
-    content,
-    toolCalls: toolCalls.filter(
-      (call): call is AssembledToolCall =>
-        Boolean(call?.id && call.function.name)
-    ),
-  };
-}
-
-/** 把已消费的流转成带 tool_calls 的 assistant 消息，供第二轮 followup 使用 */
-export function toAssistantToolMessage(
-  consumed: ConsumedChatStream
-): ChatCompletionMessageParam {
-  return {
-    role: "assistant",
-    content: consumed.content || null,
-    tool_calls: consumed.toolCalls,
-  };
 }

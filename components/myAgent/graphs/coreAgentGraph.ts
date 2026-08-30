@@ -4,10 +4,10 @@
  * 边：callModel → 有 toolCalls 则 executeTools → callModelFollowup → persistAssistant
  *     否则直接 persistAssistant。token / navigate / done / error 以 SSE 推出。
  */
-import { getOpenAI } from "../core/createModel";
+import { initAgentChatModel } from "../core/createModel";
+import { toAIMessage } from "../core/langchainStream";
 import {
   encodeAgentStreamEvent,
-  toAssistantToolMessage,
   type AgentStreamEvent,
 } from "../core/stream";
 import { callModel, callModelFollowup } from "../nodes/callModel";
@@ -16,12 +16,12 @@ import { persistAssistant } from "../nodes/persistAssistant";
 import type { ContextSchema, CoreAgentState } from "../core/coreAgentState";
 
 /** 跑完一轮图，返回可交给 Response 的 SSE ReadableStream */
-export function runCoreAgentGraph(
+export async function runCoreAgentGraph(
   state: CoreAgentState,
   context: ContextSchema
-): ReadableStream {
-  // 与原先 route 在进流之前 getOpenAI() 一致：缺 key 时仍走 JSON 500，而不是 SSE error
-  getOpenAI();
+): Promise<ReadableStream> {
+  // 与原先 route 在进流之前 getOpenAI() 一致：缺 key / 初始化失败时仍走 JSON 500
+  await initAgentChatModel(context);
 
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -53,7 +53,7 @@ export function runCoreAgentGraph(
               ...state,
               messages: [
                 ...state.messages,
-                toAssistantToolMessage(first),
+                toAIMessage(first),
                 ...toolMessages,
               ],
             },

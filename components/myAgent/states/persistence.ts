@@ -4,7 +4,7 @@
  * 历史必须先校验 conversations.profile_id === device_id。
  */
 import { randomBytes } from "crypto";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { AIMessage, HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   IP_DAILY_LIMIT,
@@ -270,7 +270,7 @@ export async function loadOwnedHistory(
 export async function loadLlmHistory(
   admin: SupabaseClient,
   conversationId: string
-): Promise<{ ok: true; messages: ChatCompletionMessageParam[] } | PersistenceFailure> {
+): Promise<{ ok: true; messages: BaseMessage[] } | PersistenceFailure> {
   const { data, error } = await admin
     .from("messages")
     .select("role, content")
@@ -287,7 +287,7 @@ export async function loadLlmHistory(
     };
   }
 
-  const messages: ChatCompletionMessageParam[] = (data ?? [])
+  const messages: BaseMessage[] = (data ?? [])
     .reverse()
     .flatMap((row) => {
       if (
@@ -297,11 +297,11 @@ export async function loadLlmHistory(
       ) {
         return [];
       }
+      const content = row.content.slice(0, MAX_USER_CONTENT_CHARS);
       return [
-        {
-          role: row.role,
-          content: row.content.slice(0, MAX_USER_CONTENT_CHARS),
-        },
+        row.role === "user"
+          ? new HumanMessage(content)
+          : new AIMessage(content),
       ];
     });
 

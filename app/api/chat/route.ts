@@ -10,7 +10,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import {
+  HumanMessage,
+  SystemMessage,
+  isHumanMessage,
+} from "@langchain/core/messages";
 import { getRequestIp, hashIpForRateLimit } from "@/components/myAgent/core/clientIp";
 import {
   MAX_CHAT_BODY_BYTES,
@@ -136,15 +140,17 @@ export async function POST(req: NextRequest) {
     // 2. 调用 LLM：上下文只来自该会话在库中的消息，不采信前端 history
     const storedMessages = [...history.messages];
     const lastStored = storedMessages[storedMessages.length - 1];
-    if (lastStored?.role !== "user" || lastStored.content !== userContent) {
-      storedMessages.push({ role: "user", content: userContent });
+    const lastText =
+      typeof lastStored?.content === "string" ? lastStored.content : "";
+    if (!lastStored || !isHumanMessage(lastStored) || lastText !== userContent) {
+      storedMessages.push(new HumanMessage(userContent));
     }
-    const llmMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: buildSystemPrompt(locale) },
+    const llmMessages = [
+      new SystemMessage(buildSystemPrompt(locale)),
       ...storedMessages,
     ];
 
-    const readable = runCoreAgentGraph(
+    const readable = await runCoreAgentGraph(
       { messages: llmMessages, conversationId },
       {
         model:

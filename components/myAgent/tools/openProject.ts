@@ -2,40 +2,38 @@
  * Agent 工具：open_project。
  * 访客明确要求打开某个站点页面时调用；只介绍、不要求跳转时不要调用。
  */
-import type { ChatCompletionTool } from "openai/resources/chat/completions";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 import { PROJECT_LINK_IDS, PROJECT_LINKS } from "./projectLinks";
 import type { OpenProjectResult } from "./types";
 
-/** 与 ChatCompletionTool.function.name 对齐 */
+/** 与 LangChain tool.name 对齐 */
 export const OPEN_PROJECT_NAME = "open_project";
 
-/** 发给模型的 tool schema：id 枚举来自 PROJECT_LINKS */
-export const OPEN_PROJECT_TOOL: ChatCompletionTool = {
-  type: "function",
-  function: {
+const openProjectDescription =
+  "当访客明确要求打开、跳转、带去看某个站点项目或页面时调用。不要在只是询问介绍时调用。" +
+  "可选 id：" +
+  PROJECT_LINKS.map(
+    (item) =>
+      `${item.id}=${item.title.zh}/${item.title.en}（${item.aliases.join("、")}）`
+  ).join("；") +
+  "。没有对应页面时不要调用。";
+
+const OpenProjectInput = z.object({
+  id: z
+    .enum(PROJECT_LINK_IDS as [string, ...string[]])
+    .describe("要打开的页面 id"),
+});
+
+/** 发给模型的 LangChain tool；执行仍走 executeOpenProject */
+export const OPEN_PROJECT_TOOL = tool(
+  (input) => executeOpenProject(input),
+  {
     name: OPEN_PROJECT_NAME,
-    description:
-      "当访客明确要求打开、跳转、带去看某个站点项目或页面时调用。不要在只是询问介绍时调用。" +
-      "可选 id：" +
-      PROJECT_LINKS.map(
-        (item) =>
-          `${item.id}=${item.title.zh}/${item.title.en}（${item.aliases.join("、")}）`,
-      ).join("；") +
-      "。没有对应页面时不要调用。",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        id: {
-          type: "string",
-          enum: [...PROJECT_LINK_IDS],
-          description: "要打开的页面 id",
-        },
-      },
-      required: ["id"],
-    },
-  },
-};
+    description: openProjectDescription,
+    schema: OpenProjectInput,
+  }
+);
 
 /** 从模型参数里取出 id；兼容参数已是 JSON 字符串的情况 */
 function parseOpenProjectId(args: unknown): string | null {

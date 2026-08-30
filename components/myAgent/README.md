@@ -166,10 +166,10 @@ components/myAgent/
 ├── infomation.md / KNOWLEDGE.md
 ├── ChatWidget.tsx            ← 前端 UI 入口
 ├── useChat.ts                ← 客户端会话 Hook
-├── core/                     ← 配置、模型、SSE、Supabase、人设
-├── states/                   ← Agent 状态类型 + 持久化
+├── core/                     ← 模型初始化、配置、Context/State、SSE、Supabase、人设
+├── states/                   ← 展示类型 + 持久化 / 限流
+├── graphs/                   ← LangGraph 接线
 ├── nodes/                    ← callModel / executeTools / persistAssistant
-├── graphs/                   ← 核心 Agent 图（接线）
 └── tools/                    ← open_project 等工具
 
 app/api/chat/route.ts         ← HTTP 入口：校验后调用 graph
@@ -245,6 +245,9 @@ export default function HomePage() {
 | `states/types.ts` | `Message`、`Profile`、`Conversation` 的 TypeScript 类型定义 |
 | `core/supabaseAdmin.ts` | 服务端 Supabase 客户端；环境变量缺失时抛错 |
 | `graphs/coreAgentGraph.ts` | LLM → 工具 → followup → 落库 的接线 |
+| `nodes/` | `callModel` / `executeTools` / `persistAssistant` |
+| `core/createModel.ts` | `initChatModel` 初始化 |
+| `core/coreAgentState.ts` | `ContextSchema` + `CoreAgentState` |
 | `useChat.ts` | 核心 Hook：device_id 管理、消息列表、流式接收、错误处理 |
 | `ChatWidget.tsx` | 玻璃拟态 UI：消息气泡、输入框、展开/收起/常驻按钮 |
 | `app/api/chat/route.ts` | Next.js API Route：校验 device_id → 调 graph → 流式返回 |

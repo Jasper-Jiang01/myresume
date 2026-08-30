@@ -100,6 +100,11 @@ const nextConfig = {
           outputFileTracingIncludes: {
             "/api/chat": ["./components/myAgent/infomation.md"],
           },
+          serverComponentsExternalPackages: [
+            "langchain",
+            "@langchain/openai",
+            "@langchain/core",
+          ],
         },
         async headers() {
           return [
