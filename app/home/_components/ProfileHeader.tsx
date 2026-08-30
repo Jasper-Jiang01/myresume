@@ -29,25 +29,14 @@ export function ProfileHeader() {
         </div>
       </div>
      
-      <div className="relative mt-10 size-[120px] shrink-0 hidden sm:block">
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-full bg-surface">
-          {/* 头像 */}
-            <Image
-            src={withBasePath(profile.avatar)}
-            alt={profile.name}
-            width={120}
-            height={120}
-            className="size-full object-cover"
-            priority
-          />
-        </div>
-        {/* 头像框 */}
+      <div className="relative mt-[44px] hidden size-[132px] shrink-0 overflow-hidden rounded-3xl border border-cardBorder bg-surface sm:block">
         <Image
-          src={withBasePath("/images/avatar-ring.svg")}
-          alt=""
-          width={120}
-          height={120}
-          className="pointer-events-none absolute inset-0 z-10 size-full"
+          src={withBasePath(profile.avatar)}
+          alt={profile.name}
+          width={132}
+          height={132}
+          className="absolute left-1/2 top-0 h-[138%] w-[138%] max-w-none -translate-x-1/2"
+          priority
         />
       </div>
     </header>

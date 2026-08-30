@@ -37,7 +37,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
     profile: {
       name: "蒋文喆",
       title: "设计工程师 & 全栈开发者",
-      avatar: "/assets/myavatar.png",
+      avatar: "/images/avatar.png",
       chips: [
         {
           label: "19979025589",
@@ -116,7 +116,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
     profile: {
       name: "蒋文喆",
       title: "Design Engineer & Full-stack Developer",
-      avatar: "/assets/myavatar.png",
+      avatar: "/images/avatar.png",
       chips: [
         {
           label: "19979025589",
