@@ -28,6 +28,23 @@ export const viewport: Viewport = {
   themeColor: "#f5f5f5",
 };
 
+function IcpBeian() {
+  const number =
+    process.env.NEXT_PUBLIC_ICP_NUMBER?.trim() || "赣ICP备2026021146号-1";
+  return (
+    <p className="pointer-events-none fixed bottom-2 left-1/2 z-[40] -translate-x-1/2 text-center text-[11px] leading-none text-muted">
+      <a
+        href="https://beian.miit.gov.cn/"
+        target="_blank"
+        rel="noreferrer"
+        className="pointer-events-auto text-inherit no-underline hover:text-primary"
+      >
+        {number}
+      </a>
+    </p>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -50,6 +67,7 @@ export default function RootLayout({
           <ChatWidget />
           <div className="theme-fade-overlay" aria-hidden />
           <PreferenceToggles />
+          <IcpBeian />
         </PreferencesProvider>
       </body>
     </html>

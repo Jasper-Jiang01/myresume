@@ -1,15 +1,11 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
-// Vercel 构建时会自动注入 VERCEL=1（Vercel 官方约定的环境变量）。
-// 借此区分两种部署形态：
-// - GitHub Pages：纯静态导出，需要 output: "export" + basePath("/myresume")。
-// - Vercel：动态部署，保留 API Route（如 /api/chat）能力，不做静态导出、不加 basePath。
+// Vercel 构建时会自动注入 VERCEL=1。阿里云 ECS / 轻量用 DEPLOY_TARGET=node。
+// 未设置时，生产构建仍走 GitHub Pages 静态导出（output: "export" + /myresume）。
 const isVercel = process.env.VERCEL === "1";
-const basePath = isProd && !isVercel ? "/myresume" : "";
-
-// 仅 GitHub Pages 的生产构建走静态导出。本地 next dev / Vercel 必须保留
-// API Route，否则 /api/chat 在开发时被当成 export 产物、对话接口不可用。
-const useStaticExport = isProd && !isVercel;
+const isNodeHost = process.env.DEPLOY_TARGET === "node";
+const useStaticExport = isProd && !isVercel && !isNodeHost;
+const basePath = useStaticExport ? "/myresume" : "";
 
 function cspValue(sources) {
   return Object.entries(sources)
