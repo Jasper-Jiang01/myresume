@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import projects from "../_content/projects";
+import { CSSDOODLE_IFRAME_SANDBOX } from "@/lib/iframeSandbox";
 import { withBasePath } from "@/lib/paths";
 import {
   ProjectDetailChrome,
@@ -52,7 +53,7 @@ export default function ProjectDetail({
           src={withBasePath(`/cssdoodle/${slug}/index.html`)}
           title={project.title}
           className="absolute inset-0 h-full w-full border-0"
-          sandbox="allow-scripts allow-popups"
+          sandbox={CSSDOODLE_IFRAME_SANDBOX}
           loading="lazy"
         />
       </div>

@@ -18,24 +18,12 @@ function cspValue(sources) {
 // Next.js App Router 会注入内联脚本/样式（偏好引导、hydration），无法在不引入
 // nonce middleware 的前提下去掉 'unsafe-inline'。webpack 客户端运行时会用
 // new Function() 探测全局对象，生产/开发都需要 'unsafe-eval'，否则会 EvalError。
-// cssdoodle 演示页会拉 Google Fonts、unpkg/esm.sh 上的 GSAP。
+// cssdoodle 演示页的 GSAP / 样式已放到 /cssdoodle/_shared，不再依赖境外 CDN。
 const contentSecurityPolicy = cspValue({
   "default-src": ["'self'"],
-  "script-src": [
-    "'self'",
-    "'unsafe-inline'",
-    "'unsafe-eval'",
-    "https://unpkg.com",
-    "https://esm.sh",
-    "https://cdn.esm.sh",
-  ],
-  "style-src": [
-    "'self'",
-    "'unsafe-inline'",
-    "https://fonts.googleapis.com",
-    "https://public.codepenassets.com",
-  ],
-  "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+  "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "font-src": ["'self'", "data:"],
   "img-src": ["'self'", "data:", "blob:", "https:"],
   "connect-src": ["'self'", ...(isProd ? [] : ["ws:", "wss:"])],
   "frame-src": ["'self'"],

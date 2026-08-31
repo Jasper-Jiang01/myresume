@@ -6,6 +6,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CSSDOODLE_IFRAME_SANDBOX } from "@/lib/iframeSandbox";
 
 type LazyIframeProps = {
   src: string;
@@ -69,7 +70,7 @@ export function LazyIframe({
             height,
             transform: `translate(-50%, -50%) scale(${scale}) translate(${offsetX}px, ${offsetY}px)`,
           }}
-          sandbox="allow-scripts"
+          sandbox={CSSDOODLE_IFRAME_SANDBOX}
           loading="lazy"
           tabIndex={-1}
         />

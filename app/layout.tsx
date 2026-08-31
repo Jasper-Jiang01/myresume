@@ -1,14 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
+import nextDynamic from "next/dynamic";
 import { Playfair_Display } from "next/font/google";
 import { SiteBackground } from "@/components/background/SiteBackground";
-import ChatWidget from "@/components/myAgent/ChatWidget";
-import { PreferenceToggles } from "@/components/preferences/PreferenceToggles";
 import { PreferencesProvider } from "@/components/preferences/PreferencesProvider";
 import { PREFERENCES_BOOTSTRAP_SCRIPT } from "@/lib/preferences/apply";
 import "./globals.css";
 
-// 英文衬线展示字体，绑定为 --font-serif 供大标题（如 Portfolio）使用
+const ChatWidget = nextDynamic(() => import("@/components/myAgent/ChatWidget"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const PreferenceToggles = nextDynamic(
+  () =>
+    import("@/components/preferences/PreferenceToggles").then(
+      (mod) => mod.PreferenceToggles
+    ),
+  { ssr: false, loading: () => null }
+);
+
 const fontSerif = Playfair_Display({
   subsets: ["latin"],
   weight: ["700", "900"],
@@ -27,6 +37,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: "#f5f5f5",
 };
+
+export const dynamic =
+  process.env.DEPLOY_TARGET === "node" ? "force-dynamic" : "auto";
 
 function IcpBeian() {
   const number =
@@ -56,9 +69,7 @@ export default function RootLayout({
         className={`${fontSerif.variable} relative font-sans antialiased`}
         suppressHydrationWarning
       >
-        <Script
-          id="preferences-bootstrap"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOTSTRAP_SCRIPT }}
         />
         <PreferencesProvider>
