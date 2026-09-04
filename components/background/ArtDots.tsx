@@ -1,7 +1,8 @@
 "use client";
 
 import { p5i } from "p5i";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 const {
   mount,
@@ -21,17 +22,31 @@ const {
 const SCALE = 200;
 const LENGTH = 10;
 const SPACING = 15;
+const VIEW_BUFFER = SPACING * 4;
 
 function getForceOnPoint(x: number, y: number, z: number) {
   return (noise(x / SCALE, y / SCALE, z) - 0.5) * 2 * TWO_PI;
 }
 
+/** 由坐标决定透明度，滚动裁剪后重新生成同一格点时观感稳定。 */
+function opacityFor(x: number, y: number) {
+  const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+  return (n - Math.floor(n)) * 0.5 + 0.5;
+}
+
+function viewportPointBudget(w: number, h: number) {
+  const cols = Math.ceil(w / SPACING) + 3;
+  const rows = Math.ceil((h + VIEW_BUFFER * 2) / SPACING) + 3;
+  return cols * rows;
+}
+
 export default function ArtDots() {
   const elRef = useRef<HTMLDivElement | null>(null);
-  const existingPoints = useRef(new Set<string>());
   const points = useRef<{ x: number; y: number; opacity: number }[]>([]);
   const sizeRef = useRef({ w: 0, h: 0 });
   const offsetYRef = useRef(0);
+  const syncPointsRef = useRef<() => void>(() => {});
+  const pathname = usePathname();
 
   useEffect(() => {
     const el = elRef.current;
@@ -49,19 +64,25 @@ export default function ArtDots() {
     };
     offsetYRef.current = window.scrollY;
 
-    const addPoints = () => {
+    // 只保留当前视口附近的点。详情页很长时若按整页高度累加，
+    // 返回短页面后每帧仍会遍历数十万点，造成明显卡顿。
+    const syncPoints = () => {
       const { w, h } = sizeRef.current;
       const offsetY = offsetYRef.current;
+      const yMin = offsetY - VIEW_BUFFER;
+      const yMax = offsetY + h + VIEW_BUFFER;
+      const y0 = -SPACING / 2;
+      const startN = Math.ceil((yMin - y0) / SPACING);
+      const next: { x: number; y: number; opacity: number }[] = [];
 
       for (let x = -SPACING / 2; x < w + SPACING; x += SPACING) {
-        for (let y = -SPACING / 2; y < h + offsetY + SPACING; y += SPACING) {
-          const id = `${x}-${y}`;
-          if (existingPoints.current.has(id)) continue;
-          existingPoints.current.add(id);
-          points.current.push({ x, y, opacity: Math.random() * 0.5 + 0.5 });
+        for (let y = y0 + startN * SPACING; y < yMax + SPACING; y += SPACING) {
+          next.push({ x, y, opacity: opacityFor(x, y) });
         }
       }
+      points.current = next;
     };
+    syncPointsRef.current = syncPoints;
 
     const palette = () =>
       document.documentElement.classList.contains("dark")
@@ -75,7 +96,7 @@ export default function ArtDots() {
       stroke("#ccc");
       noFill();
       noiseSeed(+new Date());
-      addPoints();
+      syncPoints();
     };
 
     const draw = ({
@@ -83,6 +104,12 @@ export default function ArtDots() {
     }: {
       circle: (x: number, y: number, d: number) => void;
     }) => {
+      const { w, h } = sizeRef.current;
+      offsetYRef.current = window.scrollY;
+      if (points.current.length > viewportPointBudget(w, h)) {
+        syncPoints();
+      }
+
       const { bg, stroke: strokeRgb } = palette();
       background(bg);
       // 固定时间参数 → noise 输出恒定，画面静止不再持续变化
@@ -120,7 +147,7 @@ export default function ArtDots() {
         h: window.innerHeight,
       };
       resizeCanvas(sizeRef.current.w, sizeRef.current.h);
-      addPoints();
+      syncPoints();
     };
 
     let scrollRaf = 0;
@@ -129,7 +156,7 @@ export default function ArtDots() {
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = 0;
         offsetYRef.current = window.scrollY;
-        addPoints();
+        syncPoints();
       });
     };
 
@@ -140,9 +167,15 @@ export default function ArtDots() {
       if (scrollRaf) cancelAnimationFrame(scrollRaf);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
+      syncPointsRef.current = () => {};
       unmount();
     };
   }, []);
+
+  useLayoutEffect(() => {
+    offsetYRef.current = window.scrollY;
+    syncPointsRef.current();
+  }, [pathname]);
 
   return (
     <div

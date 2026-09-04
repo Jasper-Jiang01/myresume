@@ -46,14 +46,7 @@ function IcpBeian() {
     process.env.NEXT_PUBLIC_ICP_NUMBER?.trim() || "赣ICP备2026021146号-1";
   return (
     <p className="pointer-events-none fixed bottom-2 left-1/2 z-[40] -translate-x-1/2 text-center text-[11px] leading-none text-muted">
-      <a
-        href="https://beian.miit.gov.cn/"
-        target="_blank"
-        rel="noreferrer"
-        className="pointer-events-auto text-inherit no-underline hover:text-primary"
-      >
-        {number}
-      </a>
+      {number}
     </p>
   );
 }
@@ -75,10 +68,13 @@ export default function RootLayout({
         <PreferencesProvider>
           <SiteBackground />
           {children}
-          <ChatWidget />
+          {/* 独立合成层，避免全屏 iframe 把站点控件盖住 */}
+          <div className="pointer-events-none fixed inset-0 z-[200] isolate [transform:translateZ(0)]">
+            <ChatWidget />
+            <PreferenceToggles />
+            <IcpBeian />
+          </div>
           <div className="theme-fade-overlay" aria-hidden />
-          <PreferenceToggles />
-          <IcpBeian />
         </PreferencesProvider>
       </body>
     </html>

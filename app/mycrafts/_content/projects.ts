@@ -25,6 +25,18 @@ export type ProjectMeta = {
   preview: ProjectPreview;
 };
 
+export const pageCopy = {
+  back: { zh: "返回首页", en: "Back to home" },
+  heading: { zh: "动效实验站", en: "Motion lab" },
+  description: {
+    zh: "纯 CSS 与 GSAP 动效实验：玻璃、视差、3D 与交互动画。",
+    en: "CSS and GSAP motion studies: glass, parallax, 3D, and interaction.",
+  },
+  regionLabel: { zh: "动效实验", en: "Motion studies" },
+  prevLabel: { zh: "上一个实验", en: "Previous study" },
+  nextLabel: { zh: "下一个实验", en: "Next study" },
+};
+
 // 显式声明索引签名返回值可能为 undefined：
 // projects[slug] 的 slug 来自路由参数，并非所有 slug 都在此表中登记，
 // 这样声明可让 TypeScript 在编译期强制调用方处理“项目不存在”的分支，

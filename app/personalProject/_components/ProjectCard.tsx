@@ -22,7 +22,6 @@ import { useScrollReveal } from "../_hooks/useScrollReveal";
 
 type ProjectCardProps = {
   title: string;
-  category?: string;
   description?: string;
   coverImage?: string;
   images?: string[];

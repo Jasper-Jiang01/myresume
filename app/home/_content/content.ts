@@ -29,7 +29,15 @@ type HomeCopy = {
   project: { title: string; items: LinkItem[] };
   tools: { title: string; items: LinkItem[] };
   skills: { title: string; rows: string[][] };
-  experience: { title: string; items: { role: string; period: string }[] };
+  experience: {
+    title: string;
+    items: {
+      role: string;
+      period: string;
+      icon?: string;
+      iconOpacity?: number;
+    }[];
+  };
 };
 
 export const home: { zh: HomeCopy; en: HomeCopy } = {
@@ -103,11 +111,14 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
       items: [
         {
           role: "美团 - 大众点评境外事业部 - 设计工程师",
-          period: "2025 - 至今",
+          period: "2025.10 - 至今",
+          icon: "/assets/meituanicon.png",
         },
         {
           role: "蚂蚁集团 - WorldFirst - 体验设计师",
-          period: "2025 - 至今",
+          period: "2024.07 - 2025.10",
+          icon: "/assets/anticon.png",
+          iconOpacity: 0.7,
         },
       ],
     },
@@ -184,10 +195,13 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
         {
           role: "Meituan — Dianping International — Design Engineer",
           period: "2025 – Present",
+          icon: "/assets/meituanicon.png",
         },
         {
           role: "Ant Group — WorldFirst — Experience Designer",
           period: "2025 – Present",
+          icon: "/assets/anticon.png",
+          iconOpacity: 0.7,
         },
       ],
     },

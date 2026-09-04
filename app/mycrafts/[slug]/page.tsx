@@ -47,12 +47,12 @@ export default function ProjectDetail({
         description={project.description}
       />
 
-      {/* iframe 全屏展示项目 */}
-      <div className="relative flex-1 overflow-hidden">
+      {/* iframe 全屏展示项目；isolate 防止 3D 合成层盖住站点控件 */}
+      <div className="relative z-0 isolate min-h-0 flex-1 overflow-hidden [transform:translateZ(0)]">
         <iframe
           src={withBasePath(`/cssdoodle/${slug}/index.html`)}
           title={project.title}
-          className="absolute inset-0 h-full w-full border-0"
+          className="absolute inset-0 h-full w-full border-0 [transform:translateZ(0)]"
           sandbox={CSSDOODLE_IFRAME_SANDBOX}
           loading="lazy"
         />

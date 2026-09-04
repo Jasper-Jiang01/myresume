@@ -38,7 +38,7 @@ export default function Loading() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 transition-all duration-500 ease-out"
+      className="fixed inset-0 z-20 flex flex-col items-center justify-center gap-6 transition-all duration-500 ease-out"
       style={{ opacity, transform: `translateY(${translateY}px)` }}
       aria-hidden
     >

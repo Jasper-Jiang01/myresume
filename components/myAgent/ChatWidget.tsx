@@ -6,6 +6,7 @@
  * 会话状态全部来自 useChat，本文件不直接打 API。
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { MAX_USER_CONTENT_CHARS } from "./core/config";
 import { useChat } from "./useChat";
@@ -141,8 +142,15 @@ function IconButton({
   );
 }
 
-/** 底部悬浮聊天面板；桌面端展示，状态来自 useChat */
+/** 项目详情页不挂载对话面板，避免盖住全屏内容 */
 export default function ChatWidget() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/projectDetails")) return null;
+  return <ChatPanel />;
+}
+
+/** 底部悬浮聊天面板；桌面端展示，状态来自 useChat */
+function ChatPanel() {
   /* 文案与对话状态（语言、消息、输入、置顶/展开） */
   const { messages: copy } = usePreferences();
   const {
@@ -247,7 +255,7 @@ export default function ChatWidget() {
   return (
     <section
       aria-label={copy.chat.region}
-      className="fixed bottom-[48px] left-1/2 z-50 hidden origin-bottom -translate-x-1/2 md:block"
+      className="pointer-events-auto fixed bottom-[48px] left-1/2 z-50 hidden origin-bottom -translate-x-1/2 md:block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

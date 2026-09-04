@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { usePreferences } from "./PreferencesProvider";
 
 function SunIcon() {
@@ -66,10 +67,13 @@ function SegmentedToggle({
 }
 
 export function PreferenceToggles() {
+  const pathname = usePathname();
   const { theme, locale, messages, setTheme, setLocale } = usePreferences();
 
+  if (pathname.startsWith("/projectDetails")) return null;
+
   return (
-    <div className="fixed bottom-[48px] right-6 z-[60] hidden items-center gap-3 md:flex lg:right-8">
+    <div className="pointer-events-auto fixed bottom-[48px] right-6 z-[60] hidden items-center gap-3 md:flex lg:right-8">
       <SegmentedToggle
         label={theme === "dark" ? messages.theme.toLight : messages.theme.toDark}
         activeIndex={theme === "dark" ? 1 : 0}

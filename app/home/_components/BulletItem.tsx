@@ -18,6 +18,8 @@ type BulletItemProps = {
   label: string;
   /** 自定义图标路径，替换默认圆点 */
   icon?: string;
+  /** 自定义图标不透明度，0–1 */
+  iconOpacity?: number;
   /** 若提供，整行渲染为可点击的链接跳转；
    *  若 internal 为 true，应传未经 withBasePath 处理的原始站内路径（如 "/mycrafts"） */
   href?: string;
@@ -40,7 +42,7 @@ export function ListDot() {
   );
 }
 
-export function BulletItem({ label, icon: customIcon, href, previewImage, newTab, internal }: BulletItemProps) {
+export function BulletItem({ label, icon: customIcon, iconOpacity, href, previewImage, newTab, internal }: BulletItemProps) {
   const icon = customIcon ? (
     <Image
       src={withBasePath(customIcon)}
@@ -48,6 +50,7 @@ export function BulletItem({ label, icon: customIcon, href, previewImage, newTab
       width={16}
       height={16}
       className="size-dot-md shrink-0"
+      style={iconOpacity != null ? { opacity: iconOpacity } : undefined}
     />
   ) : (
     <ListDot />
