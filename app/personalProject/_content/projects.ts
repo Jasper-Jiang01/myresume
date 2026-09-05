@@ -24,8 +24,8 @@ export const pageCopy = {
   prevLabel: { zh: "上一个项目", en: "Previous project" },
   nextLabel: { zh: "下一个项目", en: "Next project" },
   downloadPdf: { zh: "下载 PDF", en: "Download PDF" },
-  getWechat: { zh: "获取微信", en: "Get WeChat" },
-  getEmail: { zh: "获取邮箱", en: "Get email" },
+  getWechat: { zh: "get微信", en: "Get WeChat" },
+  getEmail: { zh: "get邮箱", en: "Get email" },
   copied: { zh: "已复制", en: "Copied" },
 };
 
@@ -72,6 +72,19 @@ const projects: PersonalProjectItem[] = [
       en: "A running set of visual studies — keeping the eye and hand sharp across styles and themes.",
     },
     coverImage: "/personalProject/3.jpg",
+    detailsSlug: "practice",
+  },
+  {
+    title: {
+      zh: "智慧能源交易平台官网",
+      en: "Smart Energy Trading Platform Website",
+    },
+    description: {
+      zh: "这是为浙大网新集团电力事业部进行的SaaS电力交易产品的官网设计。",
+      en: "Official website design for a SaaS electricity trading product for Insigma’s power division.",
+    },
+    coverImage: "/assets/EwebwsiteCover.jpg",
+    detailsSlug: "energy-website",
   },
 ];
 

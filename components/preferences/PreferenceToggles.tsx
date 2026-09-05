@@ -73,7 +73,7 @@ export function PreferenceToggles() {
   if (pathname.startsWith("/projectDetails")) return null;
 
   return (
-    <div className="pointer-events-auto fixed bottom-[48px] right-6 z-[60] hidden items-center gap-3 md:flex lg:right-8">
+    <div className="pointer-events-auto fixed bottom-[48px] right-6 z-[200] hidden isolate items-center gap-3 [transform:translateZ(0)] md:flex lg:right-8">
       <SegmentedToggle
         label={theme === "dark" ? messages.theme.toLight : messages.theme.toDark}
         activeIndex={theme === "dark" ? 1 : 0}

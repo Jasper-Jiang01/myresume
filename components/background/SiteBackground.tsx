@@ -44,6 +44,8 @@ export function SiteBackground() {
           <img
             src={HERO_BG_URL}
             alt=""
+            decoding="async"
+            fetchPriority="low"
             className="absolute inset-0 h-full w-full scale-x-[2] object-cover"
             onError={() => setBgFailed(true)}
           />

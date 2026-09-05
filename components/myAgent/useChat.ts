@@ -51,9 +51,11 @@ export interface UseChatReturn {
   isPinned: boolean;
   setIsPinned: (val: boolean) => void;
   startNewConversation: () => void;
+  /** 首次展开面板时再拉历史，避免每个页面挂载都打 /api/chat/history */
+  requestHistory: () => void;
 }
 
-/** 客户端会话入口；挂载时 hydrate device_id 并尝试拉历史 */
+/** 客户端会话入口；挂载时 hydrate device_id，历史在首次打开面板时再拉 */
 export function useChat(): UseChatReturn {
   const router = useRouter();
   const { messages: copy, locale } = usePreferences();
@@ -65,6 +67,7 @@ export function useChat(): UseChatReturn {
   const [hydrated, setHydrated] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [historyRequested, setHistoryRequested] = useState(false);
   const deviceIdRef = useRef<string>("");
   const abortRef = useRef<AbortController | null>(null);
   const latestRef = useRef({
@@ -129,9 +132,13 @@ export function useChat(): UseChatReturn {
     }
   }, [errors.history]);
 
+  const requestHistory = useCallback(() => {
+    setHistoryRequested(true);
+  }, []);
+
   useEffect(() => {
-    if (hydrated) void loadHistory();
-  }, [hydrated, loadHistory]);
+    if (hydrated && historyRequested) void loadHistory();
+  }, [hydrated, historyRequested, loadHistory]);
 
   /** 中止进行中的流，清本地会话 id 和消息列表 */
   const startNewConversation = useCallback(() => {
@@ -317,5 +324,6 @@ export function useChat(): UseChatReturn {
     isPinned,
     setIsPinned: handleSetPinned,
     startNewConversation,
+    requestHistory,
   };
 }

@@ -52,6 +52,7 @@ export function numberedPublicImages({
   ext = "jpg",
   width = DEFAULT_SLIDE.width,
   height = DEFAULT_SLIDE.height,
+  sizes = {},
 }: {
   folder: string;
   from: number;
@@ -60,13 +61,16 @@ export function numberedPublicImages({
   ext?: string;
   width?: number;
   height?: number;
+  /** 个别编号的真实宽高，覆盖默认 width/height，避免超长图占位比例错、解码后跳布局 */
+  sizes?: Record<number, { width: number; height: number }>;
 }): ProjectDetailsImage[] {
   const skipped = new Set(skip);
   const dir = folder.startsWith("/") ? folder : `/${folder}`;
   const images: ProjectDetailsImage[] = [];
   for (let n = from; n <= to; n += 1) {
     if (skipped.has(n)) continue;
-    images.push({ src: `${dir}/${n}.${ext}`, width, height });
+    const dim = sizes[n] ?? { width, height };
+    images.push({ src: `${dir}/${n}.${ext}`, width: dim.width, height: dim.height });
   }
   return images;
 }
@@ -121,6 +125,69 @@ const projects: Record<string, ProjectDetails | undefined> = {
       folder: "/laitaodian",
       from: 0,
       to: 24,
+      sizes: {
+        11: { width: 1920, height: 2106 },
+        15: { width: 1920, height: 1089 },
+        18: { width: 1920, height: 1362 },
+      },
+    }),
+  },
+  practice: {
+    slug: "practice",
+    title: {
+      zh: "个人练习作品",
+      en: "Personal studies",
+    },
+    description: {
+      zh: "持续保持对视觉能力提升与设计手感打磨的个人练习合集，记录不同风格与主题下的探索。",
+      en: "A running set of visual studies — keeping the eye and hand sharp across styles and themes.",
+    },
+    category: {
+      zh: "个人练习",
+      en: "Personal studies",
+    },
+    showIntro: false,
+    backHref: "/personalProject",
+    images: numberedPublicImages({
+      folder: "/practice",
+      from: 1,
+      to: 8,
+    }),
+  },
+  "energy-website": {
+    slug: "energy-website",
+    title: {
+      zh: "智慧能源交易平台官网",
+      en: "Smart Energy Trading Platform Website",
+    },
+    description: {
+      zh: "这是为浙大网新集团电力事业部进行的SaaS电力交易产品的官网设计。",
+      en: "Official website design for a SaaS electricity trading product for Insigma’s power division.",
+    },
+    category: {
+      zh: "官网 · SaaS",
+      en: "Website · SaaS",
+    },
+    showIntro: false,
+    backHref: "/personalProject",
+    images: numberedPublicImages({
+      folder: "/Ewebsites",
+      from: 1,
+      to: 10,
+      width: 1600,
+      height: 2285,
+      sizes: {
+        1: { width: 1600, height: 2285 },
+        2: { width: 1600, height: 3660 },
+        3: { width: 1600, height: 4095 },
+        4: { width: 1600, height: 2892 },
+        5: { width: 1600, height: 3435 },
+        6: { width: 1600, height: 1385 },
+        7: { width: 1600, height: 4110 },
+        8: { width: 1600, height: 900 },
+        9: { width: 1600, height: 1652 },
+        10: { width: 1600, height: 2315 },
+      },
     }),
   },
 };

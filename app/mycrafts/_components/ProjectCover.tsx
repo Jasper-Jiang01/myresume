@@ -18,11 +18,18 @@ type ProjectCoverProps = {
   src: string;
   title: string;
   previewConfig: ProjectPreview;
+  /** 为 false 时不挂 iframe */
+  enabled?: boolean;
 };
 
 const HOVER_SCALE = 1.1;
 
-export function ProjectCover({ src, title, previewConfig }: ProjectCoverProps) {
+export function ProjectCover({
+  src,
+  title,
+  previewConfig,
+  enabled = true,
+}: ProjectCoverProps) {
   const coverRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
@@ -75,6 +82,7 @@ export function ProjectCover({ src, title, previewConfig }: ProjectCoverProps) {
           scale={scale}
           offsetX={offsetX}
           offsetY={offsetY}
+          enabled={enabled}
         />
       </div>
     </div>

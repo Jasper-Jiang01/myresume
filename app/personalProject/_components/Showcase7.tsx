@@ -127,32 +127,37 @@ export function Showcase7() {
             </h1>
 
             <div className="relative mt-10 aspect-video overflow-hidden rounded-2xl border border-cardBorder bg-card sm:mt-12">
-              {items.map((study, index) => (
-                <motion.div
-                  key={study.coverImage}
-                  initial={false}
-                  animate={{
-                    opacity: active === index ? 1 : 0,
-                    scale: reduceMotion || active === index ? 1 : 1.06,
-                  }}
-                  transition={{
-                    duration: reduceMotion ? 0 : 0.55,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  aria-hidden={active !== index}
-                  className="absolute inset-0"
-                >
-                  <Image
-                    src={withBasePath(study.coverImage)}
-                    alt={study.title}
-                    fill
-                    priority={index === 0}
-                    sizes="(min-width: 1024px) 58vw, 100vw"
-                    draggable={false}
-                    className="object-cover"
-                  />
-                </motion.div>
-              ))}
+              {items.map((study, index) => {
+                const nearby = Math.abs(index - active) <= 1;
+                return (
+                  <motion.div
+                    key={study.coverImage}
+                    initial={false}
+                    animate={{
+                      opacity: active === index ? 1 : 0,
+                      scale: reduceMotion || active === index ? 1 : 1.06,
+                    }}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.55,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    aria-hidden={active !== index}
+                    className="absolute inset-0"
+                  >
+                    {nearby ? (
+                      <Image
+                        src={withBasePath(study.coverImage)}
+                        alt={study.title}
+                        fill
+                        priority={index === 0}
+                        sizes="(min-width: 1024px) 58vw, 100vw"
+                        draggable={false}
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </motion.div>
+                );
+              })}
               {current ? (
                 <span className="absolute left-4 top-4 rounded-full bg-[var(--card-glass)] px-3 py-1 font-mono text-[11px] tracking-[0.12em] text-primary backdrop-blur-sm">
                   {current.index} / {total}

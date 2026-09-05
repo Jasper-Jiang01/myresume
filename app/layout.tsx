@@ -2,14 +2,10 @@ import type { Metadata, Viewport } from "next";
 import nextDynamic from "next/dynamic";
 import { Playfair_Display } from "next/font/google";
 import { SiteBackground } from "@/components/background/SiteBackground";
+import { ChatWidgetLoader } from "@/components/myAgent/ChatWidgetLoader";
 import { PreferencesProvider } from "@/components/preferences/PreferencesProvider";
 import { PREFERENCES_BOOTSTRAP_SCRIPT } from "@/lib/preferences/apply";
 import "./globals.css";
-
-const ChatWidget = nextDynamic(() => import("@/components/myAgent/ChatWidget"), {
-  ssr: false,
-  loading: () => null,
-});
 
 const PreferenceToggles = nextDynamic(
   () =>
@@ -41,16 +37,6 @@ export const viewport: Viewport = {
 export const dynamic =
   process.env.DEPLOY_TARGET === "node" ? "force-dynamic" : "auto";
 
-function IcpBeian() {
-  const number =
-    process.env.NEXT_PUBLIC_ICP_NUMBER?.trim() || "赣ICP备2026021146号-1";
-  return (
-    <p className="pointer-events-none fixed bottom-2 left-1/2 z-[40] -translate-x-1/2 text-center text-[11px] leading-none text-muted">
-      {number}
-    </p>
-  );
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -68,12 +54,8 @@ export default function RootLayout({
         <PreferencesProvider>
           <SiteBackground />
           {children}
-          {/* 独立合成层，避免全屏 iframe 把站点控件盖住 */}
-          <div className="pointer-events-none fixed inset-0 z-[200] isolate [transform:translateZ(0)]">
-            <ChatWidget />
-            <PreferenceToggles />
-            <IcpBeian />
-          </div>
+          <PreferenceToggles />
+          <ChatWidgetLoader />
           <div className="theme-fade-overlay" aria-hidden />
         </PreferencesProvider>
       </body>

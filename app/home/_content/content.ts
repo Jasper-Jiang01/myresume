@@ -7,6 +7,10 @@ type Chip = {
 type LinkItem = {
   label: string;
   icon?: string;
+  iconSize?: number;
+  iconOpacity?: number;
+  /** 整行水平偏移（px），负值向左 */
+  offsetX?: number;
   href?: string;
   previewImage?: string;
   newTab?: boolean;
@@ -69,29 +73,52 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
       title: "作品",
       items: [
         {
-          label: "个人作品集",
+          label: "作品集",
           icon: "/assets/meituanicon.png",
+          iconSize: 18,
+          iconOpacity: 0.8,
           href: "/personalProject",
           previewImage: "/assets/46.jpg",
           internal: true,
         },
-        { label: "美团项目2", icon: "/assets/meituanicon.png" },
-        { label: "Agent开发项目" },
-        { label: "蚂蚁国际项目" },
+        {
+          label: "个人博客",
+          icon: "/assets/blog.png",
+          iconSize: 20,
+          iconOpacity: 0.3,
+          offsetX: -2,
+        },
+        {
+          label: "Agent应用开发",
+          icon: "/assets/MingcuteAiFill.png",
+          iconSize: 16,
+          iconOpacity: 0.3,
+        },
       ],
     },
     tools: {
       title: "工具",
       items: [
-        { label: "插件设计 - Figma& Mastergo" },
+        {
+          label: "插件设计 - Figma& Mastergo",
+          icon: "/assets/figma-component-filled.png",
+          iconSize: 18,
+          iconOpacity: 0.3,
+        },
         {
           label: "动效实验站",
+          icon: "/assets/IcBaselineConstruction.webp",
+          iconSize: 18,
+          iconOpacity: 0.3,
           href: "/mycrafts",
           previewImage: "/assets/preview-mycrafts.png",
           internal: true,
         },
         {
           label: "CSS灵动按钮工坊",
+          icon: "/assets/IcBaselineIntegrationInstructions.webp",
+          iconSize: 18,
+          iconOpacity: 0.3,
           href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
           previewImage: "/assets/preview-button-workshop.png",
           newTab: false,
@@ -113,6 +140,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
           role: "美团 - 大众点评境外事业部 - 设计工程师",
           period: "2025.10 - 至今",
           icon: "/assets/meituanicon.png",
+          iconOpacity: 0.8,
         },
         {
           role: "蚂蚁集团 - WorldFirst - 体验设计师",
@@ -152,29 +180,52 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
       title: "Work",
       items: [
         {
-          label: "Personal portfolio",
+          label: "Portfolio",
           icon: "/assets/meituanicon.png",
+          iconSize: 18,
+          iconOpacity: 0.8,
           href: "/personalProject",
           previewImage: "/assets/46.jpg",
           internal: true,
         },
-        { label: "Meituan project 2", icon: "/assets/meituanicon.png" },
-        { label: "Agent development" },
-        { label: "Ant International" },
+        {
+          label: "Personal blog",
+          icon: "/assets/blog.png",
+          iconSize: 20,
+          iconOpacity: 0.3,
+          offsetX: -2,
+        },
+        {
+          label: "Agent apps",
+          icon: "/assets/MingcuteAiFill.png",
+          iconSize: 16,
+          iconOpacity: 0.3,
+        },
       ],
     },
     tools: {
       title: "Tools",
       items: [
-        { label: "Plugin design — Figma & MasterGo" },
+        {
+          label: "Plugin design — Figma & MasterGo",
+          icon: "/assets/figma-component-filled.png",
+          iconSize: 18,
+          iconOpacity: 0.3,
+        },
         {
           label: "Motion lab",
+          icon: "/assets/IcBaselineConstruction.webp",
+          iconSize: 18,
+          iconOpacity: 0.3,
           href: "/mycrafts",
           previewImage: "/assets/preview-mycrafts.png",
           internal: true,
         },
         {
           label: "CSS button workshop",
+          icon: "/assets/IcBaselineIntegrationInstructions.webp",
+          iconSize: 18,
+          iconOpacity: 0.3,
           href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
           previewImage: "/assets/preview-button-workshop.png",
           newTab: false,
@@ -196,6 +247,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
           role: "Meituan — Dianping International — Design Engineer",
           period: "2025 – Present",
           icon: "/assets/meituanicon.png",
+          iconOpacity: 0.8,
         },
         {
           role: "Ant Group — WorldFirst — Experience Designer",

@@ -58,41 +58,56 @@ function GalleryFigure({
   alt: string;
   caption?: string;
 }) {
-  const width = image.width ?? 1920;
-  const height = image.height ?? 1080;
-  const eager = index < 2;
+  const fallbackWidth = image.width ?? 1920;
+  const fallbackHeight = image.height ?? 1080;
+  const eager = index === 0;
   const boxRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(eager);
+  const [size, setSize] = useState({ width: fallbackWidth, height: fallbackHeight });
+  const [measured, setMeasured] = useState(false);
 
   useEffect(() => {
-    if (eager) return;
     const node = boxRef.current;
     if (!node) return;
     const io = new IntersectionObserver(
       ([entry]) => {
         setActive(entry.isIntersecting);
       },
-      { rootMargin: "400px 0px", threshold: 0 }
+      // 超长截图解码很贵，只提前半屏准备，离开视口即卸图
+      { rootMargin: "160px 0px", threshold: 0 }
     );
     io.observe(node);
     return () => io.disconnect();
-  }, [eager]);
+  }, []);
 
   return (
     <figure className="overflow-hidden rounded-2xl border border-cardBorder bg-card">
       <div
         ref={boxRef}
         className="relative w-full"
-        style={{ aspectRatio: `${width} / ${height}` }}
+        style={active && measured ? undefined : { aspectRatio: `${size.width} / ${size.height}` }}
       >
         {active ? (
           <Image
             src={withBasePath(image.src)}
             alt={alt}
-            fill
+            width={size.width}
+            height={size.height}
             priority={eager}
+            quality={80}
             sizes="(min-width: 1400px) 1400px, 100vw"
-            className="object-cover"
+            className="h-auto w-full"
+            style={{ aspectRatio: measured ? "auto" : `${size.width} / ${size.height}` }}
+            onLoad={(event) => {
+              const { naturalWidth, naturalHeight } = event.currentTarget;
+              if (!naturalWidth || !naturalHeight) return;
+              setSize((prev) =>
+                prev.width === naturalWidth && prev.height === naturalHeight
+                  ? prev
+                  : { width: naturalWidth, height: naturalHeight }
+              );
+              setMeasured(true);
+            }}
           />
         ) : null}
       </div>

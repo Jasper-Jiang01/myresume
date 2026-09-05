@@ -2,19 +2,11 @@
  * Figma: AboutMe
  * 组件名称：AboutMe
  * 组件描述：AboutMe 组件是用于显示关于我的信息，包含标题、内容和兴趣爱好。
- * 组件属性：
- *  - title: string，标题
- *  - paragraphs: string[]，内容
- *  - passionLabel: string，兴趣爱好标签
- *  - passions: string，兴趣爱好
  */
-"use client";
-
-import { useHomeContent } from "../_content/useHomeContent";
+import type { HomeContent } from "../_content/content";
 import { SectionCard } from "./SectionCard";
 
-export function AboutMe() {
-  const { aboutMe } = useHomeContent();
+export function AboutMe({ aboutMe }: { aboutMe: HomeContent["aboutMe"] }) {
   return (
     <SectionCard
       title={aboutMe.title}

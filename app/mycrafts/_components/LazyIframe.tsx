@@ -1,11 +1,10 @@
 /**
- * 懒加载 iframe：仅在容器进入视口时才真正加载 src，
- * 避免首屏同时加载多个完整文档（每个 cssdoodle demo 都是独立 HTML 页面）。
+ * 按需挂载 iframe：enabled 为 false 时卸掉文档，避免横向列表同时跑多个完整 demo。
  */
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CSSDOODLE_IFRAME_SANDBOX } from "@/lib/iframeSandbox";
 
 type LazyIframeProps = {
@@ -16,8 +15,8 @@ type LazyIframeProps = {
   scale: number;
   offsetX: number;
   offsetY: number;
-  /** 提前多少 px 开始加载（默认 200），让用户滚到时已就绪 */
-  rootMargin?: string;
+  /** 为 false 时卸掉 iframe，只保留占位，避免横向列表同时跑多个完整 demo */
+  enabled?: boolean;
 };
 
 export function LazyIframe({
@@ -28,38 +27,16 @@ export function LazyIframe({
   scale,
   offsetX,
   offsetY,
-  rootMargin = "200px",
+  enabled = true,
 }: LazyIframeProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(enabled);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    // 特性检测：不支持 IntersectionObserver 时直接加载 iframe
-    if (typeof IntersectionObserver === "undefined") {
-      setVisible(true);
-      return;
-    }
-
-    // 不可见时挂一个轻量占位，可见时再挂 iframe
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [rootMargin]);
+    setVisible(enabled);
+  }, [enabled]);
 
   return (
-    <div ref={ref} className="relative h-full w-full">
+    <div className="relative h-full w-full">
       {visible ? (
         <iframe
           src={src}

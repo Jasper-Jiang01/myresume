@@ -219,7 +219,7 @@ export function Showcase8() {
             animate="visible"
             className="flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-4 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-6 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden"
           >
-            {items.map((project) => (
+            {items.map((project, index) => (
               <MotionLink
                 key={project.slug}
                 href={project.href}
@@ -234,6 +234,7 @@ export function Showcase8() {
                     src={project.previewSrc}
                     title={project.title}
                     previewConfig={project.previewConfig}
+                    enabled={Math.abs(index - active) <= 1}
                   />
                   <span className="absolute left-4 top-4 rounded-full bg-[var(--card-glass)] px-3 py-1 text-xs font-medium text-primary backdrop-blur-sm">
                     {project.category}

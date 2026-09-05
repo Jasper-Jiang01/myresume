@@ -14,6 +14,9 @@ const {
   noise,
   noiseSeed,
   resizeCanvas,
+  pixelDensity,
+  noLoop,
+  loop,
   cos,
   sin,
   TWO_PI,
@@ -21,8 +24,15 @@ const {
 
 const SCALE = 200;
 const LENGTH = 10;
-const SPACING = 15;
-const VIEW_BUFFER = SPACING * 4;
+const SPACING_DESKTOP = 15;
+const SPACING_MOBILE = 28;
+
+type Dot = { x: number; y: number; opacity: number };
+type Palette = { bg: string; stroke: readonly [number, number, number] };
+
+function spacingForWidth(w: number) {
+  return w < 768 ? SPACING_MOBILE : SPACING_DESKTOP;
+}
 
 function getForceOnPoint(x: number, y: number, z: number) {
   return (noise(x / SCALE, y / SCALE, z) - 0.5) * 2 * TWO_PI;
@@ -34,15 +44,21 @@ function opacityFor(x: number, y: number) {
   return (n - Math.floor(n)) * 0.5 + 0.5;
 }
 
-function viewportPointBudget(w: number, h: number) {
-  const cols = Math.ceil(w / SPACING) + 3;
-  const rows = Math.ceil((h + VIEW_BUFFER * 2) / SPACING) + 3;
+function readPalette(): Palette {
+  return document.documentElement.classList.contains("dark")
+    ? { bg: "#121318", stroke: [140, 140, 150] }
+    : { bg: "#ffffff", stroke: [200, 200, 200] };
+}
+
+function viewportPointBudget(w: number, h: number, spacing: number) {
+  const viewBuffer = spacing * 4;
+  const cols = Math.ceil(w / spacing) + 3;
+  const rows = Math.ceil((h + viewBuffer * 2) / spacing) + 3;
   return cols * rows;
 }
 
 export default function ArtDots() {
   const elRef = useRef<HTMLDivElement | null>(null);
-  const points = useRef<{ x: number; y: number; opacity: number }[]>([]);
   const sizeRef = useRef({ w: 0, h: 0 });
   const offsetYRef = useRef(0);
   const syncPointsRef = useRef<() => void>(() => {});
@@ -64,35 +80,48 @@ export default function ArtDots() {
     };
     offsetYRef.current = window.scrollY;
 
+    let spacing = spacingForWidth(sizeRef.current.w);
+    const pool: Dot[] = [];
+    let pointCount = 0;
+    let palette = readPalette();
+
     // 只保留当前视口附近的点。详情页很长时若按整页高度累加，
     // 返回短页面后每帧仍会遍历数十万点，造成明显卡顿。
+    // 复用 pool 对象，避免滚动时每帧分配新数组。
     const syncPoints = () => {
       const { w, h } = sizeRef.current;
+      spacing = spacingForWidth(w);
+      const viewBuffer = spacing * 4;
       const offsetY = offsetYRef.current;
-      const yMin = offsetY - VIEW_BUFFER;
-      const yMax = offsetY + h + VIEW_BUFFER;
-      const y0 = -SPACING / 2;
-      const startN = Math.ceil((yMin - y0) / SPACING);
-      const next: { x: number; y: number; opacity: number }[] = [];
+      const yMin = offsetY - viewBuffer;
+      const yMax = offsetY + h + viewBuffer;
+      const y0 = -spacing / 2;
+      const startN = Math.ceil((yMin - y0) / spacing);
+      let i = 0;
 
-      for (let x = -SPACING / 2; x < w + SPACING; x += SPACING) {
-        for (let y = y0 + startN * SPACING; y < yMax + SPACING; y += SPACING) {
-          next.push({ x, y, opacity: opacityFor(x, y) });
+      for (let x = -spacing / 2; x < w + spacing; x += spacing) {
+        for (let y = y0 + startN * spacing; y < yMax + spacing; y += spacing) {
+          const existing = pool[i];
+          if (existing) {
+            existing.x = x;
+            existing.y = y;
+            existing.opacity = opacityFor(x, y);
+          } else {
+            pool[i] = { x, y, opacity: opacityFor(x, y) };
+          }
+          i += 1;
         }
       }
-      points.current = next;
+      pointCount = i;
     };
     syncPointsRef.current = syncPoints;
 
-    const palette = () =>
-      document.documentElement.classList.contains("dark")
-        ? { bg: "#121318", stroke: [140, 140, 150] as const }
-        : { bg: "#ffffff", stroke: [200, 200, 200] as const };
-
     const setup = () => {
       const { w, h } = sizeRef.current;
+      // 装饰层用 1x 像素即可，避免 Retina 上 canvas 面积翻倍
+      pixelDensity(1);
       createCanvas(w, h);
-      background(palette().bg);
+      background(palette.bg);
       stroke("#ccc");
       noFill();
       noiseSeed(+new Date());
@@ -104,19 +133,22 @@ export default function ArtDots() {
     }: {
       circle: (x: number, y: number, d: number) => void;
     }) => {
+      if (document.hidden) return;
+
       const { w, h } = sizeRef.current;
       offsetYRef.current = window.scrollY;
-      if (points.current.length > viewportPointBudget(w, h)) {
+      if (pointCount > viewportPointBudget(w, h, spacing)) {
         syncPoints();
       }
 
-      const { bg, stroke: strokeRgb } = palette();
+      const { bg, stroke: strokeRgb } = palette;
       background(bg);
       // 固定时间参数 → noise 输出恒定，画面静止不再持续变化
       const t = prefersReducedMotion ? 0 : +new Date() / 10000;
       const offsetY = offsetYRef.current;
 
-      for (const p of points.current) {
+      for (let i = 0; i < pointCount; i += 1) {
+        const p = pool[i];
         const { x, y } = p;
         const rad = getForceOnPoint(x, y, t);
         const length = (noise(x / SCALE, y / SCALE, t * 2) + 0.5) * LENGTH;
@@ -130,6 +162,8 @@ export default function ArtDots() {
         );
         circle(nx, ny - offsetY, 1);
       }
+
+      if (prefersReducedMotion) noLoop();
     };
 
     mount(el, { setup, draw });
@@ -160,13 +194,32 @@ export default function ArtDots() {
       });
     };
 
+    const handleVisibility = () => {
+      if (document.hidden) {
+        noLoop();
+        return;
+      }
+      if (!prefersReducedMotion) loop();
+    };
+
+    const themeObserver = new MutationObserver(() => {
+      palette = readPalette();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       if (scrollRaf) cancelAnimationFrame(scrollRaf);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      themeObserver.disconnect();
       syncPointsRef.current = () => {};
       unmount();
     };

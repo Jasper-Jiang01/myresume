@@ -73,8 +73,9 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
+  // GitHub Pages 静态导出没有图片优化服务；Vercel / Node 部署走 next/image。
   images: {
-    unoptimized: true,
+    unoptimized: useStaticExport,
   },
   // headers() 在 output: "export" 下会被 Next.js 拒绝。GitHub Pages 静态托管
   // 本身也不支持自定义响应头；这组头只在 next dev / next start / Vercel 生效。

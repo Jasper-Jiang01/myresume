@@ -2,19 +2,12 @@
  * Figma: Experience
  * 组件名称：Experience
  * 组件描述：Experience 组件是用于显示我的工作经历，包含标题、内容和兴趣爱好。
- * 组件属性：
- *  - title: string，标题
- *  - items: { role: string, period: string, icon?: string }[]，工作经历
  */
-
-"use client";
-
-import { useHomeContent } from "../_content/useHomeContent";
+import type { HomeContent } from "../_content/content";
 import { BulletItem } from "./BulletItem";
 import { SectionCard } from "./SectionCard";
 
-export function Experience() {
-  const { experience } = useHomeContent();
+export function Experience({ experience }: { experience: HomeContent["experience"] }) {
   return (
     <SectionCard
       title={experience.title}

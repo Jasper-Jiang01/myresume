@@ -1,21 +1,16 @@
-"use client";
-
 import Image from "next/image";
-import { InfoChip } from "./InfoChip";
+import type { HomeContent } from "../_content/content";
 import { withBasePath } from "@/lib/paths";
-import { useHomeContent } from "../_content/useHomeContent";
+import { InfoChip } from "./InfoChip";
 
-export function ProfileHeader() {
-  const { profile } = useHomeContent();
+export function ProfileHeader({ profile }: { profile: HomeContent["profile"] }) {
   return (
     <header className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
       <div className="mt-8 flex min-w-0 flex-1 flex-col items-start gap-2 sm:mt-12 sm:gap-3">
-        {/* 姓名和标题 */}
         <div className="flex flex-col gap-0.5">
           <h1 className="text-2xl font-bold">{profile.name}</h1>
           <p className="text-display font-medium">{profile.title}</p>
         </div>
-        {/* 标签 */}
         <div className="flex flex-wrap items-center gap-2 sm:justify-start sm:gap-3">
           {profile.chips.map((chip) => (
             <InfoChip

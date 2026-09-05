@@ -165,6 +165,7 @@ function ChatPanel() {
     isPinned,
     setIsPinned,
     startNewConversation,
+    requestHistory,
   } = useChat();
 
   /* 悬浮/聚焦、面板开合、对话区高度与滚动锚点 */
@@ -190,6 +191,11 @@ function ChatPanel() {
   const canSend = Boolean(input.trim()) && !isStreaming;
   const transcriptAtMax = transcriptH >= TRANSCRIPT_MAX_H;
 
+  /* 第一次真正打开面板时再拉历史 */
+  useEffect(() => {
+    if (wantsOpen) requestHistory();
+  }, [wantsOpen, requestHistory]);
+
   /* 悬停/聚焦/置顶时先加宽再打开面板；离开后等动画结束再收窄 */
   useEffect(() => {
     if (wantsOpen) {
@@ -214,7 +220,10 @@ function ChatPanel() {
     if (!el) return;
 
     const measure = () => {
-      const next = Math.min(el.scrollHeight + TRANSCRIPT_PAD_Y, TRANSCRIPT_MAX_H);
+      const next = Math.min(
+        el.scrollHeight + TRANSCRIPT_PAD_Y,
+        TRANSCRIPT_MAX_H,
+      );
       setTranscriptH((prev) => (prev === next ? prev : next));
     };
 
@@ -255,7 +264,7 @@ function ChatPanel() {
   return (
     <section
       aria-label={copy.chat.region}
-      className="pointer-events-auto fixed bottom-[48px] left-1/2 z-50 hidden origin-bottom -translate-x-1/2 md:block"
+      className="pointer-events-auto fixed bottom-[48px] left-1/2 z-[200] hidden origin-bottom isolate [transform:translate3d(-50%,0,0)] md:block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -292,7 +301,10 @@ function ChatPanel() {
                     transcriptAtMax ? "overflow-y-auto" : "overflow-hidden"
                   }`}
                 >
-                  <div ref={messagesListRef} className="flex flex-col gap-3 py-1">
+                  <div
+                    ref={messagesListRef}
+                    className="flex flex-col gap-3 py-1"
+                  >
                     {messages.map((msg) => (
                       <div
                         key={msg.id}
@@ -404,7 +416,10 @@ function ChatPanel() {
             >
               <PinIcon />
             </IconButton>
-            <IconButton label={copy.chat.newChat} onClick={startNewConversation}>
+            <IconButton
+              label={copy.chat.newChat}
+              onClick={startNewConversation}
+            >
               <NewChatIcon />
             </IconButton>
           </div>
