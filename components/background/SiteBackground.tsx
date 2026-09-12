@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
+import { isImmersivePath } from "@/lib/immersive";
 
 const ArtDots = dynamic(() => import("./ArtDots"), {
   ssr: false,
@@ -13,27 +14,32 @@ const HERO_BG_URL =
   "https://wxa.wxs.qq.com/wxad-design/yijie/heroBg.webp";
 
 const PROJECT_DETAILS_BG = "#121318";
+const WEBSITE_BG = "#050606";
 
 export function SiteBackground() {
   const pathname = usePathname();
   const [bgFailed, setBgFailed] = useState(false);
-  const isProjectDetails = pathname.startsWith("/projectDetails");
+  const immersive = isImmersivePath(pathname);
+  const immersiveBg = pathname.startsWith("/website")
+    ? WEBSITE_BG
+    : PROJECT_DETAILS_BG;
 
   useLayoutEffect(() => {
-    if (!isProjectDetails) return;
+    if (!immersive) return;
     const root = document.documentElement;
     const previous = root.style.backgroundColor;
-    root.style.backgroundColor = PROJECT_DETAILS_BG;
+    root.style.backgroundColor = immersiveBg;
     return () => {
       root.style.backgroundColor = previous;
     };
-  }, [isProjectDetails]);
+  }, [immersive, immersiveBg]);
 
   return (
     <>
-      {isProjectDetails ? (
+      {immersive ? (
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-[#121318]"
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{ backgroundColor: immersiveBg }}
           aria-hidden
         />
       ) : !bgFailed ? (
@@ -51,7 +57,7 @@ export function SiteBackground() {
           />
         </div>
       ) : null}
-      {isProjectDetails ? null : <ArtDots />}
+      {immersive ? null : <ArtDots />}
     </>
   );
 }

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { ArrowLeft, ArrowUpRight, Check, Download, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check, Download, Globe, Mail, MessageCircle } from "lucide-react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { pickText } from "@/lib/i18n/locale";
 import { withBasePath } from "@/lib/paths";
@@ -164,6 +164,10 @@ export function Showcase7() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-8 sm:gap-3">
+              <Link href="/website" className={actionButtonOutlineClassName}>
+                <Globe className="h-4 w-4" aria-hidden />
+                {pickText(locale, pageCopy.webPortfolio)}
+              </Link>
               <a
                 href={withBasePath(contact.pdfHref)}
                 download={contact.pdfFilename}

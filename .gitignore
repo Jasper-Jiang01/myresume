@@ -43,4 +43,5 @@ next-env.d.ts
 .skills/
 skills/
 .tmp-rbp-portfolio/
+.reference/
 

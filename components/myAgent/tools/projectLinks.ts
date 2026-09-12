@@ -28,6 +28,13 @@ export const PROJECT_LINKS: readonly ProjectLink[] = [
     ],
   },
   {
+    id: "web-portfolio",
+    href: "/website",
+    internal: true,
+    title: { zh: "网页版作品集", en: "Web portfolio" },
+    aliases: ["网页版作品集", "网页作品集", "web portfolio", "website"],
+  },
+  {
     id: "mycrafts",
     href: "/mycrafts",
     internal: true,
