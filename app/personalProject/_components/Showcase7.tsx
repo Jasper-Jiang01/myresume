@@ -34,8 +34,6 @@ const actionButtonClassName =
 
 const actionButtonOutlineClassName = `${actionButtonClassName} border-cardBorder text-primary hover:border-[var(--btn-bg)] hover:bg-[var(--btn-bg)] hover:text-[var(--btn-fg)]`;
 
-const actionButtonSolidClassName = `${actionButtonClassName} border-transparent bg-[var(--btn-bg)] text-[var(--btn-fg)] hover:opacity-90`;
-
 /** 同一 SPA 会话内只播一次进场。从详情返回时若重放 opacity:0，会感觉卡住再淡入。 */
 let showcaseHasEntered = false;
 
@@ -169,7 +167,7 @@ export function Showcase7() {
               <a
                 href={withBasePath(contact.pdfHref)}
                 download={contact.pdfFilename}
-                className={actionButtonSolidClassName}
+                className={actionButtonOutlineClassName}
               >
                 <Download className="h-4 w-4" aria-hidden />
                 {pickText(locale, pageCopy.downloadPdf)}

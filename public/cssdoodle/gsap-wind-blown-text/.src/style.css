@@ -1,0 +1,110 @@
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background: #f0efe9;
+  color: #1a1917;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+.intro {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #d8d5cc;
+}
+
+.intro__inner {
+  text-align: center;
+}
+
+.sec {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  border-bottom: 1px solid #d8d5cc;
+}
+
+.sec--body {
+  max-width: 720px;
+}
+
+.outro {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 60vh;
+  padding: 6rem 2rem;
+}
+
+.scroll-cue {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(1.4rem, 3vw, 1.875rem);
+  font-weight: 500;
+  color: #706e69;
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.sec__label {
+  font-size: 0.68rem;
+  color: #706e69;
+  margin-bottom: 1.75rem;
+}
+
+h1, h2 {
+  line-height: 0.95;
+  font-weight: 800;
+}
+
+.sec h1 {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(3rem, 9vw, 7.5rem);
+}
+
+.sec h2 {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(2.5rem, 8vw, 6.5rem);
+}
+
+.sec p.fly-text {
+  font-size: clamp(1.2rem, 2.25vw, 1.625rem);
+  line-height: 1.55;
+}
+
+.fly-text {
+  position: relative;
+}
+
+.fly-char {
+  will-change: transform, opacity;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

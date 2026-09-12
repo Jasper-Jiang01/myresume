@@ -26,6 +26,18 @@ const config: Config = {
         surface: "var(--surface)",
         press: "var(--press)",
         stroke: "var(--stroke)",
+        background: "rgb(var(--sc-background-rgb) / <alpha-value>)",
+        foreground: "rgb(var(--sc-foreground-rgb) / <alpha-value>)",
+        bg: "rgb(10 10 10 / <alpha-value>)",
+        text: "rgb(245 245 245 / <alpha-value>)",
+      },
+      spacing: {
+        100: "25rem",
+        105: "26.25rem",
+        160: "40rem",
+        225: "56.25rem",
+        275: "68.75rem",
+        312: "78rem",
       },
       fontFamily: {
         sans: [
@@ -45,6 +57,13 @@ const config: Config = {
           '"Source Han Sans CN"',
           "sans-serif",
         ],
+        serif: [
+          "var(--font-sc-serif)",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
       },
       fontSize: {
         // 语义字号：默认固定；仅关键文案可用 sm: 升一档
@@ -68,9 +87,11 @@ const config: Config = {
         chip: "0.375rem",
         icon: "0.5rem", // 8px
         "icon-lg": "0.5rem",
+        "4xl": "2rem",
       },
       borderWidth: {
         card: "0.75px",
+        6: "6px",
       },
       transitionTimingFunction: {
         // 模拟原站 WebGL 插值惯性的阻尼缓动：先快后缓，比 ease-out 更有"跟手感"

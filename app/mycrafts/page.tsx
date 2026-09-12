@@ -1,4 +1,4 @@
-import { Showcase8 } from "./_components/Showcase8";
+import { Features7 } from "./_components/Features7";
 
 /**
  * 个人作品页
@@ -8,7 +8,7 @@ import { Showcase8 } from "./_components/Showcase8";
 export default function MyCrafts() {
   return (
     <main className="relative z-10 min-h-screen">
-      <Showcase8 />
+      <Features7 />
     </main>
   );
 }

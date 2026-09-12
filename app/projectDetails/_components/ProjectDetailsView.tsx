@@ -44,8 +44,9 @@ function imageAlt(
 }
 
 /**
- * 离开视口较远时卸掉 <img>，避免 30+ 张原图同时解码占内存。
- * 返回作品集时只需回收附近几张，而不是整页图集。
+ * 盒子比例始终用登记的宽高锁死，图片 fill 铺满。
+ * 不再在 onLoad 后改尺寸 / 拿掉 aspect-ratio，避免解码完成时整卡高度跳一下。
+ * 进入预加载带后挂上 <img>，不再离开视口就卸掉，避免滚回来重挂闪一下。
  */
 function GalleryFigure({
   image,
@@ -58,56 +59,43 @@ function GalleryFigure({
   alt: string;
   caption?: string;
 }) {
-  const fallbackWidth = image.width ?? 1920;
-  const fallbackHeight = image.height ?? 1080;
-  const eager = index === 0;
+  const width = image.width ?? 1920;
+  const height = image.height ?? 1080;
+  const eager = index < 2;
   const boxRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(eager);
-  const [size, setSize] = useState({ width: fallbackWidth, height: fallbackHeight });
-  const [measured, setMeasured] = useState(false);
 
   useEffect(() => {
+    if (eager) return;
     const node = boxRef.current;
     if (!node) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        setActive(entry.isIntersecting);
+        if (!entry.isIntersecting) return;
+        setActive(true);
+        io.disconnect();
       },
-      // 超长截图解码很贵，只提前半屏准备，离开视口即卸图
-      { rootMargin: "160px 0px", threshold: 0 }
+      { rootMargin: "400px 0px", threshold: 0 }
     );
     io.observe(node);
     return () => io.disconnect();
-  }, []);
+  }, [eager]);
 
   return (
     <figure className="overflow-hidden rounded-2xl border border-cardBorder bg-card">
       <div
         ref={boxRef}
         className="relative w-full"
-        style={active && measured ? undefined : { aspectRatio: `${size.width} / ${size.height}` }}
+        style={{ aspectRatio: `${width} / ${height}` }}
       >
         {active ? (
           <Image
             src={withBasePath(image.src)}
             alt={alt}
-            width={size.width}
-            height={size.height}
+            fill
             priority={eager}
-            quality={80}
             sizes="(min-width: 1400px) 1400px, 100vw"
-            className="h-auto w-full"
-            style={{ aspectRatio: measured ? "auto" : `${size.width} / ${size.height}` }}
-            onLoad={(event) => {
-              const { naturalWidth, naturalHeight } = event.currentTarget;
-              if (!naturalWidth || !naturalHeight) return;
-              setSize((prev) =>
-                prev.width === naturalWidth && prev.height === naturalHeight
-                  ? prev
-                  : { width: naturalWidth, height: naturalHeight }
-              );
-              setMeasured(true);
-            }}
+            className="object-contain"
           />
         ) : null}
       </div>

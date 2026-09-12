@@ -137,13 +137,13 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
       title: "经历",
       items: [
         {
-          role: "美团 - 大众点评境外事业部 - 设计工程师",
+          role: "美团 - 境外事业部 - 设计工程师",
           period: "2025.10 - 至今",
           icon: "/assets/meituanicon.png",
           iconOpacity: 0.8,
         },
         {
-          role: "蚂蚁集团 - WorldFirst - 体验设计师",
+          role: "蚂蚁集团 - 国际事业部 - 体验设计师",
           period: "2024.07 - 2025.10",
           icon: "/assets/anticon.png",
           iconOpacity: 0.7,

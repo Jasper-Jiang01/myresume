@@ -63,6 +63,20 @@ export const PROJECT_LINKS: readonly ProjectLink[] = [
     aliases: ["after sign-off", "after sign off"],
   },
   {
+    id: "strings",
+    href: "/mycrafts/strings",
+    internal: true,
+    title: { zh: "Strings", en: "Strings" },
+    aliases: ["strings", "布料", "字符帘幕", "cloth"],
+  },
+  {
+    id: "gsap-wind-blown-text",
+    href: "/mycrafts/gsap-wind-blown-text",
+    internal: true,
+    title: { zh: "GSAP Wind-Blown Text", en: "GSAP Wind-Blown Text" },
+    aliases: ["wind-blown", "wind blown", "飞字", "吹散文字"],
+  },
+  {
     id: "button-workshop",
     href: "/cssdoodle/button-state-buildera-visual-editor-for-designing-multi-state-button-flows/dist/index.html",
     internal: false,

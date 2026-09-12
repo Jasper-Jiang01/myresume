@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { isImmersivePath } from "@/lib/immersive";
 import { usePreferences } from "./PreferencesProvider";
 
 function SunIcon() {
@@ -70,7 +71,7 @@ export function PreferenceToggles() {
   const pathname = usePathname();
   const { theme, locale, messages, setTheme, setLocale } = usePreferences();
 
-  if (pathname.startsWith("/projectDetails")) return null;
+  if (isImmersivePath(pathname)) return null;
 
   return (
     <div className="pointer-events-auto fixed bottom-[48px] right-6 z-[200] hidden isolate items-center gap-3 [transform:translateZ(0)] md:flex lg:right-8">

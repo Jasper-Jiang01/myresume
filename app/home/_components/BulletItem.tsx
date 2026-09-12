@@ -47,15 +47,27 @@ export function ListDot() {
   );
 }
 
+/** 品牌彩标：dark 模式保持原色，不做反白 */
+const PRESERVE_COLOR_ICONS = new Set([
+  "/assets/meituanicon.png",
+  "/assets/anticon.png",
+]);
+
 export function BulletItem({ label, icon: customIcon, iconSize, iconOpacity, offsetX, href, previewImage, newTab, internal }: BulletItemProps) {
   const size = iconSize ?? 16;
+  const invertInDark = customIcon != null && !PRESERVE_COLOR_ICONS.has(customIcon);
   const icon = customIcon ? (
     <Image
       src={withBasePath(customIcon)}
       alt=""
       width={size}
       height={size}
-      className={iconSize != null ? "shrink-0" : "size-dot-md shrink-0"}
+      className={[
+        iconSize != null ? "shrink-0" : "size-dot-md shrink-0",
+        invertInDark ? "dark:invert dark:!opacity-[0.6]" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={{
         ...(iconSize != null ? { width: iconSize, height: iconSize } : {}),
         ...(iconOpacity != null ? { opacity: iconOpacity } : {}),

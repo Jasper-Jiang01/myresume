@@ -35,6 +35,7 @@ export const pageCopy = {
   regionLabel: { zh: "动效实验", en: "Motion studies" },
   prevLabel: { zh: "上一个实验", en: "Previous study" },
   nextLabel: { zh: "下一个实验", en: "Next study" },
+  openLabel: { zh: "打开实验", en: "Open study" },
 };
 
 // 显式声明索引签名返回值可能为 undefined：
@@ -85,6 +86,26 @@ const projects: ProjectMetaMap = {
     },
     // 固定像素尺寸的电视机造型，居中并留出边距避免裁切
     preview: { baseWidth: 640, baseHeight: 560, zoom: 1.3 },
+  },
+  strings: {
+    title: "Strings",
+    category: "Canvas, Physics, Interaction",
+    description: {
+      zh: "用源码字符织成的布料模拟：拖拽、拨动，看文字帘幕在重力里晃动。",
+      en: "A cloth sim woven from source-code glyphs — drag and pluck the curtain as gravity takes over.",
+    },
+    // 全屏 canvas，核心布料约 400×400 居中
+    preview: { baseWidth: 720, baseHeight: 540, zoom: 1.25 },
+  },
+  "gsap-wind-blown-text": {
+    title: "GSAP Wind-Blown Text",
+    category: "GSAP, Scroll, Typography",
+    description: {
+      zh: "用 data 属性驱动的 GSAP ScrollTrigger 文字：字母随滚动被风吹散或聚拢。",
+      en: "Data-attribute GSAP ScrollTrigger type: letters scatter or gather as you scroll, as if caught in wind.",
+    },
+    // 首屏 intro 居中，100vh 段落，正常还原即可
+    preview: { baseWidth: 1280, baseHeight: 760, zoom: 1.15 },
   },
 };
 

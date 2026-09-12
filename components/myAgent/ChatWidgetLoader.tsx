@@ -6,6 +6,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { isImmersivePath } from "@/lib/immersive";
 
 const ChatWidget = dynamic(() => import("./ChatWidget"), {
   ssr: false,
@@ -15,7 +16,7 @@ const ChatWidget = dynamic(() => import("./ChatWidget"), {
 export function ChatWidgetLoader() {
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
-  const skip = pathname.startsWith("/projectDetails");
+  const skip = isImmersivePath(pathname);
 
   useEffect(() => {
     if (skip) {

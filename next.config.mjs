@@ -22,15 +22,20 @@ function cspValue(sources) {
 const contentSecurityPolicy = cspValue({
   "default-src": ["'self'"],
   "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-  "style-src": ["'self'", "'unsafe-inline'"],
-  "font-src": ["'self'", "data:"],
+  "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
   "img-src": ["'self'", "data:", "blob:", "https:"],
-  "connect-src": ["'self'", ...(isProd ? [] : ["ws:", "wss:"])],
+  "connect-src": [
+    "'self'",
+    "https://fonts.googleapis.com",
+    "https://fonts.gstatic.com",
+    ...(isProd ? [] : ["ws:", "wss:"]),
+  ],
   "frame-src": ["'self'"],
   "frame-ancestors": ["'self'"],
   "worker-src": ["'self'", "blob:"],
   "manifest-src": ["'self'"],
-  "media-src": ["'self'"],
+  "media-src": ["'self'", "blob:"],
   "object-src": ["'none'"],
   "base-uri": ["'self'"],
   "form-action": ["'self'"],
@@ -73,9 +78,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
-  // GitHub Pages 静态导出没有图片优化服务；Vercel / Node 部署走 next/image。
   images: {
-    unoptimized: useStaticExport,
+    unoptimized: true,
   },
   // headers() 在 output: "export" 下会被 Next.js 拒绝。GitHub Pages 静态托管
   // 本身也不支持自定义响应头；这组头只在 next dev / next start / Vercel 生效。
