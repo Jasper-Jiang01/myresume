@@ -87,6 +87,8 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
           iconSize: 20,
           iconOpacity: 0.3,
           offsetX: -2,
+          href: "/blogDetail",
+          internal: true,
         },
         {
           label: "Agent应用开发",
@@ -194,6 +196,8 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
           iconSize: 20,
           iconOpacity: 0.3,
           offsetX: -2,
+          href: "/blogDetail",
+          internal: true,
         },
         {
           label: "Agent apps",
