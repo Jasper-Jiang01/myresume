@@ -1,17 +1,27 @@
 "use client";
 
+import { Fragment } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { usePreferences } from "@/components/preferences/PreferencesProvider";
+import { pickText, type LocalizedText } from "@/lib/i18n/locale";
 import { withBasePath } from "@/lib/paths";
 import { projectDetailsPath } from "@/app/projectDetails/_content/projects";
-import { websiteCases, websiteContact } from "../_content/content";
+import { websiteCases, websiteContact, websiteCopy } from "../_content/content";
+import { portraitPhoto } from "../_content/portrait";
 import { BorderGlow } from "./BorderGlow";
 import { CapabilityIcon } from "./CapabilityIcon";
-import { Galaxy } from "./Galaxy";
 import { GradualBlur } from "./GradualBlur";
 import { HeroScene } from "./HeroScene";
 import { InteractionLayer } from "./InteractionLayer";
 import { MotionDirector } from "./MotionDirector";
+
+const Galaxy = dynamic(
+  () => import("./Galaxy").then((mod) => mod.Galaxy),
+  { ssr: false, loading: () => null },
+);
 
 const projectGlowProps = {
   edgeSensitivity: 24,
@@ -25,7 +35,19 @@ const projectGlowProps = {
   colors: ["#f47b43", "#9fc7d9", "#9b8cff"],
 };
 
+function lines(text: string) {
+  return text.split("\n").map((line, index) => (
+    <Fragment key={index}>
+      {index > 0 ? <br /> : null}
+      {line}
+    </Fragment>
+  ));
+}
+
 export function WebsiteView() {
+  const { locale } = usePreferences();
+  const t = (value: LocalizedText) => pickText(locale, value);
+
   return (
     <div className="website-page">
       <MotionDirector />
@@ -45,22 +67,28 @@ export function WebsiteView() {
         zIndex={0}
         className="site-scroll-blur"
       />
-      <Link href="/personalProject" aria-label="返回列表版" className="backList">
+      <Link href="/personalProject" aria-label={t(websiteCopy.back)} className="backList">
         <ArrowLeft size={14} />
       </Link>
 
       <section className="hero" id="home">
         <header className="nav shell">
-          <Link className="brandLogo" href="/home" aria-label="蒋文喆">
-            <img src={withBasePath("/images/avatar.png")} alt="蒋文喆" />
+          <Link className="brandLogo" href="/home" aria-label={t(websiteCopy.brandName)}>
+            <Image
+              src={withBasePath("/images/avatar.png")}
+              alt={t(websiteCopy.brandName)}
+              width={32}
+              height={32}
+              priority
+            />
           </Link>
-          <nav aria-label="Main navigation">
-            <a href="#work">Work</a>
-            <a href="#about">About</a>
-            <a href="#capabilities">Capabilities</a>
+          <nav aria-label={t(websiteCopy.navAria)}>
+            <a href="#work">{t(websiteCopy.navWork)}</a>
+            <a href="#about">{t(websiteCopy.navAbout)}</a>
+            <a href="#capabilities">{t(websiteCopy.navCapabilities)}</a>
           </nav>
           <a className="contactPill" href="#contact">
-            <i /> Let’s talk <span>↗</span>
+            <i /> {t(websiteCopy.talk)} <span>↗</span>
           </a>
         </header>
         <HeroScene />
@@ -68,69 +96,67 @@ export function WebsiteView() {
 
       <section className="about section shell" id="about">
         <div className="aboutEyebrow">
-          <i /> WHY CHOOSE ME
+          <i /> {t(websiteCopy.aboutEyebrow)}
         </div>
         <div className="aboutHeader">
           <h2 className="editorialTitle">
-            <span className="editorialLeadLine">Meet the mind</span>
-            <span className="editorialLine">Behind the work</span>
+            <span className="editorialLeadLine">{t(websiteCopy.aboutTitleLead)}</span>
+            <span className="editorialLine">{t(websiteCopy.aboutTitleLine)}</span>
           </h2>
           <div className="aboutSocial">
-            <a href={`mailto:${websiteContact.email}`}>EMAIL</a>
+            <a href={`mailto:${websiteContact.email}`}>{t(websiteCopy.aboutEmail)}</a>
             <button type="button" onClick={() => navigator.clipboard.writeText(websiteContact.wechat)}>
-              WX
+              {t(websiteCopy.aboutWechat)}
             </button>
             <a href={withBasePath(websiteContact.pdfHref)} download={websiteContact.pdfFilename}>
-              PDF
+              {t(websiteCopy.contactPdf)}
             </a>
           </div>
         </div>
         <div className="aboutShowcase">
           <figure className="portrait aboutPortrait">
-            <img
+            <Image
               className="portraitPhoto"
-              src={withBasePath("/images/avatar.png")}
-              alt="蒋文喆"
+              src={portraitPhoto}
+              alt={t(websiteCopy.brandName)}
+              fill
+              sizes="(min-width: 1024px) 28vw, 90vw"
             />
-            <figcaption>SHANGHAI, CN · MEITUAN INTERNATIONAL</figcaption>
+            <figcaption>{t(websiteCopy.aboutCaption)}</figcaption>
           </figure>
           <div className="aboutDetails">
-            <p className="aboutLead">
-              I bring together product thinking, visual craft, and engineering to create
-              clear digital experiences that actually ship.
-            </p>
+            <p className="aboutLead">{t(websiteCopy.aboutLead)}</p>
             <div className="aboutLocation">
               <span>◎</span>
               <p>
-                BASED IN SHANGHAI
+                {t(websiteCopy.aboutLocationLabel)}
                 <br />
-                <b>MEITUAN INTERNATIONAL · PREVIOUSLY ANT</b>
+                <b>{t(websiteCopy.aboutLocationValue)}</b>
               </p>
             </div>
             <div className="aboutCards">
               <article className="aboutMetricCard">
-                <strong>
-                  0—1
-                </strong>
-                <span>END-TO-END DESIGN ENGINEER</span>
+                <strong>{t(websiteCopy.aboutMetric)}</strong>
+                <span>{t(websiteCopy.aboutMetricLabel)}</span>
                 <ul>
-                  <li>美团境外事业部</li>
-                  <li>蚂蚁 · World First</li>
-                  <li>设计到上线</li>
+                  {websiteCopy.aboutMetricItems.map((item) => (
+                    <li key={item.en}>{t(item)}</li>
+                  ))}
                 </ul>
                 <a href="#contact">
-                  LET’S WORK TOGETHER <b>↗</b>
+                  {t(websiteCopy.aboutWorkTogether)} <b>↗</b>
                 </a>
               </article>
               <article className="aboutFactCard">
-                <img src={withBasePath("/personalProject/1.jpg")} alt="" />
-                <span>RECENT · 01/02</span>
-                <strong>美团</strong>
-                <p>
-                  境外事业部
-                  <br />
-                  设计工程师
-                </p>
+                <Image
+                  src={withBasePath("/personalProject/1.jpg")}
+                  alt={t(websiteCopy.aboutFactTitle)}
+                  fill
+                  sizes="(min-width: 1024px) 18vw, 45vw"
+                />
+                <span>{t(websiteCopy.aboutFactKicker)}</span>
+                <strong>{t(websiteCopy.aboutFactTitle)}</strong>
+                <p>{lines(t(websiteCopy.aboutFactBody))}</p>
               </article>
             </div>
           </div>
@@ -140,19 +166,19 @@ export function WebsiteView() {
       <section className="work section" id="work">
         <div className="shell">
           <div className="sectionTop">
-            <span>02 / SELECTED WORK</span>
-            <span>2024—2026</span>
+            <span>{t(websiteCopy.workKicker)}</span>
+            <span>{t(websiteCopy.workYears)}</span>
           </div>
           <div className="workHeading">
             <div>
-              <span className="workKicker">CASE STUDIES</span>
+              <span className="workKicker">{t(websiteCopy.workLabel)}</span>
               <h2 className="editorialTitle">
-                <span className="editorialLeadLine">Selected</span>
-                <span className="editorialLine">stories</span>
+                <span className="editorialLeadLine">{t(websiteCopy.workTitleLead)}</span>
+                <span className="editorialLine">{t(websiteCopy.workTitleLine)}</span>
               </h2>
             </div>
             <a className="seeWork" href="#contact">
-              Discuss a project <span>↗</span>
+              {t(websiteCopy.workDiscuss)} <span>↗</span>
             </a>
           </div>
           <div className="projects">
@@ -162,12 +188,14 @@ export function WebsiteView() {
                   <Link
                     className="projectVisual"
                     href={projectDetailsPath(project.slug)}
-                    aria-label={project.name.zh}
+                    aria-label={t(project.name)}
                   >
-                    <img
+                    <Image
                       className="projectCover"
                       src={withBasePath(project.coverImage)}
-                      alt={`${project.name.zh} project cover`}
+                      alt={`${t(project.name)} — ${t(project.label)}`}
+                      fill
+                      sizes="(min-width: 1024px) 42vw, 92vw"
                     />
                     <span className="projectArrow" aria-hidden="true">
                       ↗
@@ -179,13 +207,13 @@ export function WebsiteView() {
                   <div>
                     <h3>
                       <Link href={projectDetailsPath(project.slug)}>
-                        {project.name.zh} — {project.label.zh}
+                        {t(project.name)} — {t(project.label)}
                       </Link>
                     </h3>
                     <div className="projectTags">
-                      <i>{project.type.zh}</i>
-                      <i>{project.role.zh}</i>
-                      <i>{project.result.zh}</i>
+                      <i>{t(project.type)}</i>
+                      <i>{t(project.role)}</i>
+                      <i>{t(project.result)}</i>
                     </div>
                   </div>
                 </div>
@@ -197,54 +225,40 @@ export function WebsiteView() {
 
       <section className="capabilities section shell" id="capabilities">
         <div className="sectionTop">
-          <span>03 / CAPABILITIES</span>
-          <span>HOW I CREATE VALUE</span>
+          <span>{t(websiteCopy.capKicker)}</span>
+          <span>{t(websiteCopy.capHow)}</span>
         </div>
         <div className="capIntro">
           <h2 className="editorialTitle">
-            <span className="editorialLeadLine">FROM DIRECTION</span>
-            <span className="editorialLine">TO DELIVERY.</span>
+            <span className="editorialLeadLine">{t(websiteCopy.capTitleLead)}</span>
+            <span className="editorialLine">{t(websiteCopy.capTitleLine)}</span>
           </h2>
           <p>
-            不仅定义设计，也把它写进代码、送上线。
+            {t(websiteCopy.capIntroZh)}
             <br />
-            <span>
-              I define the direction, build the system,
-              <br />
-              and stay until it ships.
-            </span>
+            <span>{lines(t(websiteCopy.capIntroEn))}</span>
           </p>
         </div>
         <div className="capGrid">
-          {[
-            ["01", "全流程产品设计", "End-to-end Design", "从调研、产品定义到交互、视觉与最终落地，建立完整而清晰的体验秩序。"],
-            ["02", "设计工程落地", "Design Engineering", "用 React / Next.js 把设计变成可上线的界面，减少跨角色损耗。"],
-            ["03", "交互与动效", "Motion & Interaction", "让界面有节奏、有反馈，复杂流程也能走得顺。"],
-            ["04", "0—1 产品设计", "Zero to One", "从概念、MVP 到正式上线，持续验证并交付真实价值。"],
-          ].map(([no, title, en, text]) => (
-            <article key={no}>
-              <span>{no}</span>
+          {websiteCopy.capabilities.map((capability) => (
+            <article key={capability.no}>
+              <span>{capability.no}</span>
               <div className="capIcon">
-                <CapabilityIcon no={no} />
+                <CapabilityIcon no={capability.no} />
               </div>
-              <h3>{title}</h3>
-              <h4>{en}</h4>
-              <p>{text}</p>
+              <h3>{t(capability.title)}</h3>
+              <h4>{t(capability.en)}</h4>
+              <p>{t(capability.body)}</p>
             </article>
           ))}
         </div>
         <div className="process">
-          <span>RESEARCH</span>
-          <i>→</i>
-          <span>ANALYZE</span>
-          <i>→</i>
-          <span>DEFINE</span>
-          <i>→</i>
-          <span>DESIGN</span>
-          <i>→</i>
-          <span>BUILD</span>
-          <i>→</i>
-          <span>SHIP</span>
+          {websiteCopy.process.map((step, index) => (
+            <Fragment key={step}>
+              {index > 0 ? <i aria-hidden="true">→</i> : null}
+              <span>{step}</span>
+            </Fragment>
+          ))}
         </div>
       </section>
 
@@ -267,31 +281,31 @@ export function WebsiteView() {
         <div className="contactVeil" />
         <div className="shell contactInner">
           <div className="sectionTop">
-            <span>04 / CONTACT</span>
-            <span>SHANGHAI · GMT+8</span>
+            <span>{t(websiteCopy.contactKicker)}</span>
+            <span>{t(websiteCopy.contactMeta)}</span>
           </div>
           <div className="availability">
-            <i /> AVAILABLE FOR FULL-TIME · PROJECTS · CONSULTING
+            <i /> {t(websiteCopy.contactAvail)}
           </div>
           <h2 className="editorialTitle">
-            <span className="editorialLeadLine">LET’S MAKE</span>
-            <span className="editorialLine">SOMETHING MATTER.</span>
+            <span className="editorialLeadLine">{t(websiteCopy.contactTitleLead)}</span>
+            <span className="editorialLine">{t(websiteCopy.contactTitleLine)}</span>
           </h2>
           <a className="mail" href={`mailto:${websiteContact.email}`}>
             {websiteContact.email} <span>↗</span>
           </a>
           <div className="contactBottom">
-            <p>如果你在找一个能把设计做完、也能把东西做上线的人，欢迎写信或加微信。</p>
+            <p>{t(websiteCopy.contactBody)}</p>
             <div>
               <button type="button" onClick={() => navigator.clipboard.writeText(websiteContact.wechat)}>
-                WECHAT
+                {t(websiteCopy.aboutWechat)}
               </button>
               <a href={withBasePath(websiteContact.pdfHref)} download={websiteContact.pdfFilename}>
-                PDF
+                {t(websiteCopy.contactPdf)}
               </a>
-              <a href={`mailto:${websiteContact.email}`}>EMAIL</a>
+              <a href={`mailto:${websiteContact.email}`}>{t(websiteCopy.aboutEmail)}</a>
             </div>
-            <span>© 2026 蒋文喆</span>
+            <span>{t(websiteCopy.copyright)}</span>
           </div>
         </div>
       </footer>

@@ -40,7 +40,7 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 639px) {
   .site-scroll-blur {
     height: 8rem !important;
   }

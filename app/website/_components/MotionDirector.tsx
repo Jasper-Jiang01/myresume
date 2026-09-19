@@ -1,11 +1,16 @@
 "use client";
 
 import { useLayoutEffect } from "react";
+import { usePreferences } from "@/components/preferences/PreferencesProvider";
+import { pickText } from "@/lib/i18n/locale";
+import { websiteCopy } from "../_content/content";
 
 type GsapModule = typeof import("gsap");
 type ScrollTriggerModule = typeof import("gsap/ScrollTrigger");
 
 export function MotionDirector() {
+  const { locale } = usePreferences();
+
   useLayoutEffect(() => {
     let disposed = false;
     let destroy = () => {};
@@ -340,9 +345,13 @@ export function MotionDirector() {
       <div className="openingCurtain__panel openingCurtain__panel--top" />
       <div className="openingCurtain__panel openingCurtain__panel--bottom" />
       <div className="openingCurtain__meta" data-opening-meta>
-        <div className="openingCurtain__label" data-opening-label>INDEPENDENT DESIGNER · SHANGHAI</div>
+        <div className="openingCurtain__label" data-opening-label>
+          {pickText(locale, websiteCopy.openingLabel)}
+        </div>
         <div className="openingCurtain__rule" data-opening-rule />
-        <div className="openingCurtain__index" data-opening-index>JIANG WENZHE — PORTFOLIO 2026</div>
+        <div className="openingCurtain__index" data-opening-index>
+          {pickText(locale, websiteCopy.openingIndex)}
+        </div>
       </div>
     </div>
   );

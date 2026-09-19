@@ -4,8 +4,8 @@ import personalProjects, {
 } from "@/app/personalProject/_content/projects";
 
 /**
- * website 页面的文案、封面与案例数据。
- * 图片走 public/ 下的既有路径，组件只从本文件读数据。
+ * website 页面的文案与案例数据（不含静态图）。
+ * 画廊封面见 ./heroCovers.ts，About 肖像见 ./portrait.ts。
  */
 
 export const websiteContact = {
@@ -14,22 +14,6 @@ export const websiteContact = {
   pdfHref: personalContact.pdfHref,
   pdfFilename: personalContact.pdfFilename,
 };
-
-export const heroCovers = [
-  "/personalProject/1.jpg",
-  "/worldfirst/10.jpg",
-  "/personalProject/2.jpg",
-  "/laitaodian/0.jpg",
-  "/personalProject/3.jpg",
-  "/worldfirst/16.jpg",
-  "/assets/EwebwsiteCover.jpg",
-  "/worldfirst/22.jpg",
-  "/laitaodian/1.jpg",
-  "/Ewebsites/1.jpg",
-  "/worldfirst/28.jpg",
-  "/laitaodian/10.jpg",
-  "/worldfirst/34.jpg",
-];
 
 export const websiteCopy = {
   openingLabel: {
@@ -55,6 +39,9 @@ export const websiteCopy = {
     en: "Design × Engineering × Motion — turning complex products into clear, shippable experiences.",
   },
   heroCta: { zh: "Explore selected work", en: "Explore selected work" },
+  heroGalleryLabel: { zh: "精选视觉作品", en: "Selected visual work" },
+  heroCoverAlt: { zh: "作品封面", en: "Selected project" },
+  navAria: { zh: "主导航", en: "Main navigation" },
   heroPills: [
     {
       title: { zh: "Product Design", en: "Product Design" },
@@ -144,7 +131,7 @@ export const websiteCopy = {
       title: { zh: "设计工程落地", en: "设计工程落地" },
       en: { zh: "Design Engineering", en: "Design Engineering" },
       body: {
-        zh: "用 React / Next.js 把设计变成可上线的界面，减少跨角色损耗。",
+        zh: "通过前端技术栈实现设计稿的还原，减少跨角色损耗。",
         en: "Turn design into shipped UI with React / Next.js — less handoff, more fidelity.",
       },
     },
