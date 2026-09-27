@@ -10,7 +10,6 @@ import { pickText, type LocalizedText } from "@/lib/i18n/locale";
 import { withBasePath } from "@/lib/paths";
 import { projectDetailsPath } from "@/app/projectDetails/_content/projects";
 import { websiteCases, websiteContact, websiteCopy } from "../_content/content";
-import { portraitPhoto } from "../_content/portrait";
 import { BorderGlow } from "./BorderGlow";
 import { CapabilityIcon } from "./CapabilityIcon";
 import { GradualBlur } from "./GradualBlur";
@@ -84,7 +83,6 @@ export function WebsiteView() {
           </Link>
           <nav aria-label={t(websiteCopy.navAria)}>
             <a href="#work">{t(websiteCopy.navWork)}</a>
-            <a href="#about">{t(websiteCopy.navAbout)}</a>
             <a href="#capabilities">{t(websiteCopy.navCapabilities)}</a>
           </nav>
           <a className="contactPill" href="#contact">
@@ -92,75 +90,6 @@ export function WebsiteView() {
           </a>
         </header>
         <HeroScene />
-      </section>
-
-      <section className="about section shell" id="about">
-        <div className="aboutEyebrow">
-          <i /> {t(websiteCopy.aboutEyebrow)}
-        </div>
-        <div className="aboutHeader">
-          <h2 className="editorialTitle">
-            <span className="editorialLeadLine">{t(websiteCopy.aboutTitleLead)}</span>
-            <span className="editorialLine">{t(websiteCopy.aboutTitleLine)}</span>
-          </h2>
-          <div className="aboutSocial">
-            <a href={`mailto:${websiteContact.email}`}>{t(websiteCopy.aboutEmail)}</a>
-            <button type="button" onClick={() => navigator.clipboard.writeText(websiteContact.wechat)}>
-              {t(websiteCopy.aboutWechat)}
-            </button>
-            <a href={withBasePath(websiteContact.pdfHref)} download={websiteContact.pdfFilename}>
-              {t(websiteCopy.contactPdf)}
-            </a>
-          </div>
-        </div>
-        <div className="aboutShowcase">
-          <figure className="portrait aboutPortrait">
-            <Image
-              className="portraitPhoto"
-              src={portraitPhoto}
-              alt={t(websiteCopy.brandName)}
-              fill
-              sizes="(min-width: 1024px) 28vw, 90vw"
-            />
-            <figcaption>{t(websiteCopy.aboutCaption)}</figcaption>
-          </figure>
-          <div className="aboutDetails">
-            <p className="aboutLead">{t(websiteCopy.aboutLead)}</p>
-            <div className="aboutLocation">
-              <span>◎</span>
-              <p>
-                {t(websiteCopy.aboutLocationLabel)}
-                <br />
-                <b>{t(websiteCopy.aboutLocationValue)}</b>
-              </p>
-            </div>
-            <div className="aboutCards">
-              <article className="aboutMetricCard">
-                <strong>{t(websiteCopy.aboutMetric)}</strong>
-                <span>{t(websiteCopy.aboutMetricLabel)}</span>
-                <ul>
-                  {websiteCopy.aboutMetricItems.map((item) => (
-                    <li key={item.en}>{t(item)}</li>
-                  ))}
-                </ul>
-                <a href="#contact">
-                  {t(websiteCopy.aboutWorkTogether)} <b>↗</b>
-                </a>
-              </article>
-              <article className="aboutFactCard">
-                <Image
-                  src={withBasePath("/personalProject/1.jpg")}
-                  alt={t(websiteCopy.aboutFactTitle)}
-                  fill
-                  sizes="(min-width: 1024px) 18vw, 45vw"
-                />
-                <span>{t(websiteCopy.aboutFactKicker)}</span>
-                <strong>{t(websiteCopy.aboutFactTitle)}</strong>
-                <p>{lines(t(websiteCopy.aboutFactBody))}</p>
-              </article>
-            </div>
-          </div>
-        </div>
       </section>
 
       <section className="work section" id="work">

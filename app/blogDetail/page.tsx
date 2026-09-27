@@ -3,7 +3,7 @@ import { Blog3 } from "./_components/Blog3";
 
 /**
  * /blogDetail 个人博客列表
- * 文案在 ./_content/posts.ts，侧栏筛选与翻页在 Blog3。
+ * 列表文案在 ./_content/posts.ts，有正文的文章在 ./_article，侧栏筛选与翻页在 Blog3。
  */
 export const metadata: Metadata = {
   title: "蒋文喆 · 博客",

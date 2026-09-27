@@ -104,7 +104,7 @@ export function MotionDirector() {
           .to(".heroBenefits > div", { y: 0, autoAlpha: 1, duration: 1, stagger: 0.1 }, 2.42);
 
         const sectionTitles = gsap.utils.toArray<HTMLElement>(
-          "#about .editorialTitle, #work .editorialTitle, #capabilities .editorialTitle, #contact .editorialTitle",
+          "#work .editorialTitle, #capabilities .editorialTitle, #contact .editorialTitle",
         );
 
         sectionTitles.forEach((title) => {
@@ -154,38 +154,6 @@ export function MotionDirector() {
             },
           );
         });
-
-        const aboutTimeline = gsap.timeline({
-          scrollTrigger: { trigger: "#about", start: "top 70%", once: true },
-        });
-        aboutTimeline
-          .fromTo(".aboutEyebrow", { x: -36, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 1, ease: titleEase })
-          .fromTo(".aboutSocial", { x: 42, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 1, ease: titleEase }, "<")
-          .fromTo(
-            ".aboutPortrait",
-            { clipPath: "inset(0 0 100% 0 round 16px)", y: 85 },
-            { clipPath: "inset(0 0 0% 0 round 16px)", y: 0, duration: 1.62, ease: revealEase },
-            0.28,
-          )
-          .fromTo(".aboutLead", { y: 76, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.2, ease: titleEase }, 0.48)
-          .fromTo(".aboutLocation", { y: 52, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, ease: titleEase }, 0.68)
-          .fromTo(
-            ".aboutCards > article",
-            { y: 90, scale: 0.94, autoAlpha: 0 },
-            { y: 0, scale: 1, autoAlpha: 1, duration: 1.25, stagger: 0.16, ease: titleEase },
-            0.78,
-          );
-
-        gsap.fromTo(
-          ".aboutPortrait .portraitPhoto",
-          { yPercent: -5, scale: 1.14 },
-          {
-            yPercent: 5,
-            scale: 1.08,
-            ease: "none",
-            scrollTrigger: { trigger: ".aboutPortrait", start: "top bottom", end: "bottom top", scrub: 1.35 },
-          },
-        );
 
         gsap.utils.toArray<HTMLElement>(".project").forEach((project, index) => {
           const visual = project.querySelector<HTMLElement>(".projectGlow");

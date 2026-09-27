@@ -5,7 +5,7 @@ import personalProjects, {
 
 /**
  * website 页面的文案与案例数据（不含静态图）。
- * 画廊封面见 ./heroCovers.ts，About 肖像见 ./portrait.ts。
+ * 画廊封面见 ./heroCovers.ts。
  */
 
 export const websiteContact = {
@@ -26,12 +26,14 @@ export const websiteCopy = {
   },
   back: { zh: "返回列表版", en: "Back to list" },
   navWork: { zh: "Work", en: "Work" },
-  navAbout: { zh: "About", en: "About" },
   navCapabilities: { zh: "Capabilities", en: "Capabilities" },
   talk: { zh: "Let’s talk", en: "Let’s talk" },
   brandName: { zh: "蒋文喆", en: "蒋文喆" },
 
-  heroKicker: { zh: "PORTFOLIO · DESIGN ENGINEER", en: "PORTFOLIO · DESIGN ENGINEER" },
+  heroKicker: {
+    zh: "PORTFOLIO · DESIGN ENGINEER",
+    en: "PORTFOLIO · DESIGN ENGINEER",
+  },
   heroTitleLead: { zh: "Design products that", en: "Design products that" },
   heroTitleLine: { zh: "people remember", en: "people remember" },
   heroSubtitle: {
@@ -66,52 +68,24 @@ export const websiteCopy = {
     },
   ] satisfies { title: LocalizedText; body: LocalizedText }[],
 
-  aboutEyebrow: { zh: "WHY CHOOSE ME", en: "WHY CHOOSE ME" },
-  aboutTitleLead: { zh: "Meet the mind", en: "Meet the mind" },
-  aboutTitleLine: { zh: "Behind the work", en: "Behind the work" },
   aboutEmail: { zh: "邮箱", en: "EMAIL" },
   aboutWechat: { zh: "微信", en: "WECHAT" },
-  aboutCopied: { zh: "已复制", en: "Copied" },
-  aboutCaption: {
-    zh: "SHANGHAI, CN · MEITUAN INTERNATIONAL",
-    en: "SHANGHAI, CN · MEITUAN INTERNATIONAL",
-  },
-  aboutLead: {
-    zh: "我把产品思考、视觉手感和工程实现放在一起，做出清晰、可上线、也经得起用的数字体验。",
-    en: "I bring together product thinking, visual craft, and engineering to create clear digital experiences that actually ship.",
-  },
-  aboutLocationLabel: { zh: "BASED IN SHANGHAI", en: "BASED IN SHANGHAI" },
-  aboutLocationValue: {
-    zh: "MEITUAN INTERNATIONAL · PREVIOUSLY ANT",
-    en: "MEITUAN INTERNATIONAL · PREVIOUSLY ANT",
-  },
-  aboutMetric: { zh: "0—1", en: "0—1" },
-  aboutMetricLabel: { zh: "END-TO-END DESIGN ENGINEER", en: "END-TO-END DESIGN ENGINEER" },
-  aboutMetricItems: [
-    { zh: "美团境外事业部", en: "Meituan International" },
-    { zh: "蚂蚁 · World First", en: "Ant · World First" },
-    { zh: "设计到上线", en: "Design through launch" },
-  ] satisfies LocalizedText[],
-  aboutWorkTogether: { zh: "LET’S WORK TOGETHER", en: "LET’S WORK TOGETHER" },
-  aboutFactKicker: { zh: "RECENT · 01/02", en: "RECENT · 01/02" },
-  aboutFactTitle: { zh: "美团", en: "MEITUAN" },
-  aboutFactBody: {
-    zh: "境外事业部\n设计工程师",
-    en: "DIANPING INTERNATIONAL\nDESIGN ENGINEER",
-  },
 
-  workKicker: { zh: "02 / SELECTED WORK", en: "02 / SELECTED WORK" },
+  workKicker: { zh: "01 / SELECTED WORK", en: "01 / SELECTED WORK" },
   workYears: { zh: "2024—2026", en: "2024—2026" },
   workLabel: { zh: "CASE STUDIES", en: "CASE STUDIES" },
   workTitleLead: { zh: "Selected", en: "Selected" },
   workTitleLine: { zh: "stories", en: "stories" },
   workDiscuss: { zh: "Discuss a project", en: "Discuss a project" },
 
-  capKicker: { zh: "03 / CAPABILITIES", en: "03 / CAPABILITIES" },
+  capKicker: { zh: "02 / CAPABILITIES", en: "02 / CAPABILITIES" },
   capHow: { zh: "HOW I CREATE VALUE", en: "HOW I CREATE VALUE" },
   capTitleLead: { zh: "FROM DIRECTION", en: "FROM DIRECTION" },
   capTitleLine: { zh: "TO DELIVERY.", en: "TO DELIVERY." },
-  capIntroZh: { zh: "不仅定义设计，也把它写进代码、送上线。", en: "不仅定义设计，也把它写进代码、送上线。" },
+  capIntroZh: {
+    zh: "不仅定义设计，也把它写进代码、送上线。",
+    en: "不仅定义设计，也把它写进代码、送上线。",
+  },
   capIntroEn: {
     zh: "I define the direction, build the system,\nand stay until it ships.",
     en: "I define the direction, build the system,\nand stay until it ships.",
@@ -156,7 +130,7 @@ export const websiteCopy = {
   ],
   process: ["RESEARCH", "ANALYZE", "DEFINE", "DESIGN", "BUILD", "SHIP"],
 
-  contactKicker: { zh: "04 / CONTACT", en: "04 / CONTACT" },
+  contactKicker: { zh: "03 / CONTACT", en: "03 / CONTACT" },
   contactMeta: { zh: "SHANGHAI · GMT+8", en: "SHANGHAI · GMT+8" },
   contactAvail: {
     zh: "AVAILABLE FOR FULL-TIME · PROJECTS · CONSULTING",

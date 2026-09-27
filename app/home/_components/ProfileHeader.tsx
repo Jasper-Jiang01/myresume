@@ -3,7 +3,11 @@ import type { HomeContent } from "../_content/content";
 import { withBasePath } from "@/lib/paths";
 import { InfoChip } from "./InfoChip";
 
-export function ProfileHeader({ profile }: { profile: HomeContent["profile"] }) {
+export function ProfileHeader({
+  profile,
+}: {
+  profile: HomeContent["profile"];
+}) {
   return (
     <header className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
       <div className="mt-8 flex min-w-0 flex-1 flex-col items-start gap-2 sm:mt-12 sm:gap-3">
@@ -23,7 +27,7 @@ export function ProfileHeader({ profile }: { profile: HomeContent["profile"] }) 
           ))}
         </div>
       </div>
-     
+
       <div className="relative mt-[44px] hidden size-[132px] shrink-0 overflow-hidden rounded-3xl border border-cardBorder bg-surface sm:block">
         <Image
           src={withBasePath(profile.avatar)}

@@ -10,9 +10,11 @@ import {
   PAGE_SIZE,
   categories,
   pageCopy,
+  postPath,
   posts,
   type BlogCategoryId,
 } from "../_content/posts";
+import { getArticle } from "../_content/articles";
 
 /** 同一 SPA 会话内只播一次标题进场。从首页返回时若重放 opacity:0，会感觉卡住再淡入。 */
 let blogHasEntered = false;
@@ -124,18 +126,14 @@ export function Blog3() {
                 const categoryLabel = categories.find(
                   (category) => category.id === article.category
                 )?.label;
+                const href = getArticle(article.id)
+                  ? postPath(article.id)
+                  : undefined;
+                const cardClass =
+                  "rounded-xl border border-cardBorder bg-card p-5 transition-colors sm:p-6";
 
-                return (
-                  <motion.article
-                    key={article.id}
-                    initial={itemEnter}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: reduceMotion ? 0 : 0.4,
-                      delay: reduceMotion ? 0 : 0.15 + idx * 0.05,
-                    }}
-                    className="rounded-xl border border-cardBorder bg-card p-5 transition-colors sm:p-6"
-                  >
+                const body = (
+                  <>
                     <h2 className="mb-2 text-lg font-medium text-primary sm:text-xl">
                       {pickText(locale, article.title)}
                     </h2>
@@ -149,6 +147,29 @@ export function Blog3() {
                       <span aria-hidden>·</span>
                       <span>{pickText(locale, article.date)}</span>
                     </div>
+                  </>
+                );
+
+                return (
+                  <motion.article
+                    key={article.id}
+                    initial={itemEnter}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.4,
+                      delay: reduceMotion ? 0 : 0.15 + idx * 0.05,
+                    }}
+                  >
+                    {href ? (
+                      <Link
+                        href={href}
+                        className={`${cardClass} block text-inherit no-underline hover:bg-surface`}
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <div className={cardClass}>{body}</div>
+                    )}
                   </motion.article>
                 );
               })}

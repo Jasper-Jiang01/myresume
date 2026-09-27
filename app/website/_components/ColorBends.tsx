@@ -43,7 +43,7 @@ export function ColorBends(props:Props){
     const resize=()=>{const b=el.getBoundingClientRect();renderer.setSize(b.width,b.height,false);(uniforms.uResolution.value as THREE.Vector2).set(b.width,b.height)}; resize();
     const target=new THREE.Vector2(), current=new THREE.Vector2();
     const move=(e:PointerEvent)=>{const b=el.getBoundingClientRect();target.set((e.clientX-b.left)/b.width*2-1,-((e.clientY-b.top)/b.height*2-1))};
-    let frame=0,start=performance.now(); const draw=(now:number)=>{current.lerp(target,.055);(uniforms.uPointer.value as THREE.Vector2).copy(current);uniforms.uTime.value=(now-start)/1000;renderer.render(scene,camera);frame=requestAnimationFrame(draw)}; frame=requestAnimationFrame(draw);
+    let frame=0; const start=performance.now(); const draw=(now:number)=>{current.lerp(target,.055);(uniforms.uPointer.value as THREE.Vector2).copy(current);uniforms.uTime.value=(now-start)/1000;renderer.render(scene,camera);frame=requestAnimationFrame(draw)}; frame=requestAnimationFrame(draw);
     const observer=new ResizeObserver(resize);observer.observe(el);window.addEventListener("pointermove",move,{passive:true});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener("pointermove",move);geometry.dispose();material.dispose();renderer.dispose();renderer.domElement.remove()};
   },[]);
