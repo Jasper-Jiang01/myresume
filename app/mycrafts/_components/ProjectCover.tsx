@@ -82,6 +82,7 @@ export function ProjectCover({
           scale={scale}
           offsetX={offsetX}
           offsetY={offsetY}
+          focus={previewConfig.focus}
           enabled={enabled}
         />
       </div>

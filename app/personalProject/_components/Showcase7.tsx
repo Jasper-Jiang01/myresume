@@ -1,16 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { ArrowLeft, ArrowUpRight, Check, Download, Globe, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Globe } from "lucide-react";
 import { usePreferences } from "@/components/preferences/PreferencesProvider";
 import { pickText } from "@/lib/i18n/locale";
 import { withBasePath } from "@/lib/paths";
 import { projectDetailsPath } from "@/app/projectDetails/_content/projects";
-import projects, { contact, pageCopy } from "../_content/projects";
+import projects, { pageCopy } from "../_content/projects";
 
 const listVariants: Variants = {
   hidden: {},
@@ -37,50 +37,18 @@ const actionButtonOutlineClassName = `${actionButtonClassName} border-cardBorder
 /** 同一 SPA 会话内只播一次进场。从详情返回时若重放 opacity:0，会感觉卡住再淡入。 */
 let showcaseHasEntered = false;
 
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    try {
-      const el = document.createElement("textarea");
-      el.value = text;
-      el.setAttribute("readonly", "");
-      el.style.position = "fixed";
-      el.style.left = "-9999px";
-      document.body.appendChild(el);
-      el.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(el);
-      return ok;
-    } catch {
-      return false;
-    }
-  }
-}
-
 export function Showcase7() {
   const { locale } = usePreferences();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [skipEnter] = useState(() => showcaseHasEntered);
   const [active, setActive] = useState(0);
-  const [copied, setCopied] = useState<"wechat" | "email" | null>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       showcaseHasEntered = true;
     });
     return () => cancelAnimationFrame(id);
-  }, []);
-
-  const handleCopy = useCallback(async (key: "wechat" | "email", value: string) => {
-    const ok = await copyText(value);
-    if (!ok) return;
-    setCopied(key);
-    window.setTimeout(() => {
-      setCopied((current) => (current === key ? null : current));
-    }, 1800);
   }, []);
 
   const items = projects.map((project, index) => ({
@@ -168,55 +136,6 @@ export function Showcase7() {
                 <Globe className="h-4 w-4" aria-hidden />
                 {pickText(locale, pageCopy.webPortfolio)}
               </Link>
-              <a
-                href={withBasePath(contact.pdfHref)}
-                download={contact.pdfFilename}
-                className={actionButtonOutlineClassName}
-              >
-                <Download className="h-4 w-4" aria-hidden />
-                {pickText(locale, pageCopy.downloadPdf)}
-              </a>
-              <button
-                type="button"
-                onClick={() => handleCopy("wechat", contact.wechat)}
-                className={actionButtonOutlineClassName}
-                aria-label={
-                  copied === "wechat"
-                    ? pickText(locale, pageCopy.copied)
-                    : pickText(locale, pageCopy.getWechat)
-                }
-              >
-                {copied === "wechat" ? (
-                  <Check className="h-4 w-4" aria-hidden />
-                ) : (
-                  <MessageCircle className="h-4 w-4" aria-hidden />
-                )}
-                {copied === "wechat"
-                  ? pickText(locale, pageCopy.copied)
-                  : pickText(locale, pageCopy.getWechat)}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCopy("email", contact.email)}
-                className={actionButtonOutlineClassName}
-                aria-label={
-                  copied === "email"
-                    ? pickText(locale, pageCopy.copied)
-                    : pickText(locale, pageCopy.getEmail)
-                }
-              >
-                {copied === "email" ? (
-                  <Check className="h-4 w-4" aria-hidden />
-                ) : (
-                  <Mail className="h-4 w-4" aria-hidden />
-                )}
-                {copied === "email"
-                  ? pickText(locale, pageCopy.copied)
-                  : pickText(locale, pageCopy.getEmail)}
-              </button>
-              <span className="sr-only" aria-live="polite">
-                {copied ? pickText(locale, pageCopy.copied) : ""}
-              </span>
             </div>
           </motion.div>
 

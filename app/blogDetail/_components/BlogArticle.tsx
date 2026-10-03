@@ -12,6 +12,7 @@ import {
   type BlogPost,
 } from "../_content/posts";
 import type { BlogArticle } from "../_content/articles";
+import { MarkdownBody } from "./MarkdownBody";
 
 export function BlogArticleView({
   post,
@@ -29,7 +30,11 @@ export function BlogArticleView({
 
   return (
     <article
-      className="w-full px-4 pb-20 pt-28 sm:px-6 sm:pb-24 sm:pt-24 lg:px-8"
+      className={
+        article.markdown
+          ? "w-full pb-20 pl-14 pr-4 pt-28 sm:pb-24 sm:pl-16 sm:pr-6 sm:pt-24 lg:pr-8"
+          : "w-full px-4 pb-20 pt-28 sm:px-6 sm:pb-24 sm:pt-24 lg:px-8"
+      }
       aria-labelledby="blog-article-title"
     >
       <Link
@@ -40,7 +45,13 @@ export function BlogArticleView({
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
       </Link>
 
-      <div className="mx-auto w-full max-w-3xl">
+      <div
+        className={
+          article.markdown
+            ? "mx-auto w-full max-w-6xl"
+            : "mx-auto w-full max-w-3xl"
+        }
+      >
         <motion.header
           initial={enter}
           animate={{ opacity: 1, y: 0 }}
@@ -71,9 +82,16 @@ export function BlogArticleView({
             duration: reduceMotion ? 0 : 0.45,
             delay: reduceMotion ? 0 : 0.08,
           }}
-          className="mt-10 flex flex-col gap-5 sm:mt-12 sm:gap-6"
+          className={
+            article.markdown
+              ? "mt-10 sm:mt-12"
+              : "mt-10 flex flex-col gap-5 sm:mt-12 sm:gap-6"
+          }
         >
-          {article.blocks.map((block, index) => {
+          {article.markdown ? (
+            <MarkdownBody source={article.markdown} />
+          ) : (
+            article.blocks.map((block, index) => {
             if (block.type === "h2") {
               return (
                 <h2
@@ -119,7 +137,8 @@ export function BlogArticleView({
                 {pickText(locale, block.text)}
               </p>
             );
-          })}
+          })
+          )}
         </motion.div>
       </div>
     </article>

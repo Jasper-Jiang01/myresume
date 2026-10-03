@@ -7,7 +7,7 @@ import { Blog3 } from "./_components/Blog3";
  */
 export const metadata: Metadata = {
   title: "蒋文喆 · 博客",
-  description: "设计、工程与动效笔记。从做到上线的过程记录。",
+  description: "设计与工程笔记。从做到上线的过程记录。",
 };
 
 export default function BlogDetailPage() {

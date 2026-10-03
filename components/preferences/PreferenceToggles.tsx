@@ -3,7 +3,17 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { isImmersivePath } from "@/lib/immersive";
+import { PortfolioContact } from "./PortfolioContact";
 import { usePreferences } from "./PreferencesProvider";
+
+function isHomePath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const path =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+  return path === "/" || path === "/home";
+}
 
 function SunIcon() {
   return (
@@ -42,7 +52,7 @@ function SegmentedToggle({
     <div
       role="radiogroup"
       aria-label={label}
-      className="relative flex size-fit cursor-pointer flex-row items-center justify-center gap-[2px] overflow-hidden rounded-[6px] border-[0.5px] border-stroke bg-press p-0.5"
+      className="relative flex size-fit cursor-pointer flex-row items-center justify-center gap-[2px] overflow-hidden rounded-[6px] border-[0.5px] border-cardBorder bg-[var(--bg)] p-0.5 [background-image:linear-gradient(var(--press),var(--press))]"
     >
       <div
         className={`absolute top-0.5 z-0 size-6 rounded-[4px] bg-surface transition-all duration-200 ${
@@ -71,42 +81,52 @@ export function PreferenceToggles() {
   const pathname = usePathname();
   const { theme, locale, messages, setTheme, setLocale } = usePreferences();
 
-  if (isImmersivePath(pathname)) return null;
+  const immersive = isImmersivePath(pathname);
+  const showContact = !isHomePath(pathname);
 
   return (
-    <div className="pointer-events-auto fixed bottom-[48px] right-6 z-[200] hidden isolate items-center gap-3 [transform:translateZ(0)] md:flex lg:right-8">
-      <SegmentedToggle
-        label={theme === "dark" ? messages.theme.toLight : messages.theme.toDark}
-        activeIndex={theme === "dark" ? 1 : 0}
-        onSelect={(index) => setTheme(index === 1 ? "dark" : "light")}
-        options={[
-          { node: <SunIcon />, label: messages.theme.toLight },
-          { node: <MoonIcon />, label: messages.theme.toDark },
-        ]}
-      />
-      <SegmentedToggle
-        label={messages.language.switch}
-        activeIndex={locale === "en" ? 1 : 0}
-        onSelect={(index) => setLocale(index === 1 ? "en" : "zh")}
-        options={[
-          {
-            node: (
-              <span className="flex size-4 items-center justify-center text-[11px] font-medium leading-none">
-                中
-              </span>
-            ),
-            label: "中文",
-          },
-          {
-            node: (
-              <span className="flex size-4 items-center justify-center text-[10px] font-medium leading-none tracking-tight">
-                EN
-              </span>
-            ),
-            label: "English",
-          },
-        ]}
-      />
+    <div
+      className={`pointer-events-auto fixed bottom-[48px] right-6 z-[200] isolate items-center gap-3 [transform:translateZ(0)] lg:right-8 ${
+        showContact ? "flex" : "hidden md:flex"
+      }`}
+    >
+      {showContact ? <PortfolioContact /> : null}
+      {immersive ? null : (
+        <div className="hidden items-center gap-3 md:flex">
+          <SegmentedToggle
+            label={theme === "dark" ? messages.theme.toLight : messages.theme.toDark}
+            activeIndex={theme === "dark" ? 1 : 0}
+            onSelect={(index) => setTheme(index === 1 ? "dark" : "light")}
+            options={[
+              { node: <SunIcon />, label: messages.theme.toLight },
+              { node: <MoonIcon />, label: messages.theme.toDark },
+            ]}
+          />
+          <SegmentedToggle
+            label={messages.language.switch}
+            activeIndex={locale === "en" ? 1 : 0}
+            onSelect={(index) => setLocale(index === 1 ? "en" : "zh")}
+            options={[
+              {
+                node: (
+                  <span className="flex size-4 items-center justify-center text-[11px] font-medium leading-none">
+                    中
+                  </span>
+                ),
+                label: "中文",
+              },
+              {
+                node: (
+                  <span className="flex size-4 items-center justify-center text-[10px] font-medium leading-none tracking-tight">
+                    EN
+                  </span>
+                ),
+                label: "English",
+              },
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 }

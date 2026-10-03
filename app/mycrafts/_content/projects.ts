@@ -15,6 +15,11 @@ export type ProjectPreview = {
   offsetX?: number;
   /** 内容在基准视口内的垂直偏移（px），用于跳过页头等无关区域 */
   offsetY?: number;
+  /**
+   * 封面加载后，把该元素顶部滚到视口高度的这个比例处。
+   * 只影响列表封面，不改变实验页本身的滚动位置。
+   */
+  focus?: { selector: string; topRatio: number };
 };
 
 export type ProjectMeta = {
@@ -54,8 +59,8 @@ const projects: ProjectMetaMap = {
       zh: "交互式 3D 卡片实验室：玻璃质感、棱镜切面、聚光灯卡组，支持键盘/拖拽导航。",
       en: "An interactive 3D card lab: glass, prism cuts, and a spotlight deck with keyboard and drag navigation.",
     },
-    // 页面很长（导航 + hero + 多个 section），聚焦到卡片网格区域，向上偏移跳过顶部导航
-    preview: { baseWidth: 1280, baseHeight: 760, zoom: 1.65, offsetY: -170 },
+    // 公开页从形状网格开始。封面是 4:3，基准视口同比例才能铺满，不再上移露出底色。
+    preview: { baseWidth: 1280, baseHeight: 960, zoom: 1 },
   },
   "gsap-rotatey-draggable": {
     title: "GSAP rotateY Draggable",
@@ -64,8 +69,8 @@ const projects: ProjectMetaMap = {
       zh: "通过水平拖拽代理控制 3D cards 的 rotateY 动画，带惯量、边界/自由旋转模式。",
       en: "Horizontal drag drives rotateY on 3D cards, with inertia and bounded or free-spin modes.",
     },
-    // 内容整体居中，正常还原即可
-    preview: { baseWidth: 760, baseHeight: 640, zoom: 1.35 },
+    // 卡片和说明一起居中。4:3 视口刚好包住整块 demo，不再切掉底部控件。
+    preview: { baseWidth: 800, baseHeight: 600, zoom: 1 },
   },
   "pure-css-parallax-card-on-hover": {
     title: "Pure CSS Parallax Card",
@@ -84,8 +89,8 @@ const projects: ProjectMetaMap = {
       zh: "纯 CSS 动效展示。",
       en: "A pure CSS motion study.",
     },
-    // 固定像素尺寸的电视机造型，居中并留出边距避免裁切
-    preview: { baseWidth: 640, baseHeight: 560, zoom: 1.3 },
+    // 宽度超过 640 才是完整电视机。4:3 视口留出浮动边距，屏幕、旋钮和频道条都在封面里。
+    preview: { baseWidth: 960, baseHeight: 720, zoom: 1 },
   },
   strings: {
     title: "Strings",
@@ -94,8 +99,8 @@ const projects: ProjectMetaMap = {
       zh: "用源码字符织成的布料模拟：拖拽、拨动，看文字帘幕在重力里晃动。",
       en: "A cloth sim woven from source-code glyphs — drag and pluck the curtain as gravity takes over.",
     },
-    // 全屏 canvas，核心布料约 400×400 居中
-    preview: { baseWidth: 720, baseHeight: 540, zoom: 1.25 },
+    // 画布本身就是 4:3，按 1 倍放进封面，布料四边不再被裁掉。
+    preview: { baseWidth: 720, baseHeight: 540, zoom: 1 },
   },
   "gsap-wind-blown-text": {
     title: "GSAP Wind-Blown Text",
@@ -104,8 +109,23 @@ const projects: ProjectMetaMap = {
       zh: "用 data 属性驱动的 GSAP ScrollTrigger 文字：字母随滚动被风吹散或聚拢。",
       en: "Data-attribute GSAP ScrollTrigger type: letters scatter or gather as you scroll, as if caught in wind.",
     },
-    // 首屏 intro 居中，100vh 段落，正常还原即可
-    preview: { baseWidth: 1280, baseHeight: 760, zoom: 1.15 },
+    // 首屏只有一行提示。封面对准下一屏的大标题，停在 50% 触发线之上，字母还没被吹散。
+    preview: {
+      baseWidth: 1280,
+      baseHeight: 960,
+      zoom: 1,
+      focus: { selector: "h1.fly-text", topRatio: 0.54 },
+    },
+  },
+  "24-modal-effectsroll-flip-bounce": {
+    title: "24 Modal Effects",
+    category: "CSS, Modal, Motion",
+    description: {
+      zh: "24 种模态框入场：卷轴展开、翻转、弹跳与对角线滑入，全部用 CSS transform 完成。",
+      en: "Twenty-four modal entrances — roll, flip, bounce, and diagonal slides — built with CSS transforms.",
+    },
+    // 按钮组在视口中部换行居中。4:3 封面能看到整组按钮。
+    preview: { baseWidth: 1280, baseHeight: 960, zoom: 1 },
   },
 };
 

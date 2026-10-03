@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { getArticle, listArticleSlugs } from "../_content/articles";
+import {
+  getArticle,
+  getMarkdownArticle,
+  listArticleSlugs,
+} from "../_content/articles";
+import { loadMarkdownArticle } from "../_article/designer-ai-coding/load";
 import { getPost } from "../_content/posts";
 import {
   BlogArticleMissing,
@@ -16,11 +21,13 @@ export function generateMetadata({
   params: { slug: string };
 }): Metadata {
   const post = getPost(params.slug);
-  const article = getArticle(params.slug);
-  if (!post || !article) return { title: "文章不存在" };
+  const description =
+    getArticle(params.slug)?.description ??
+    getMarkdownArticle(params.slug)?.description;
+  if (!post || !description) return { title: "文章不存在" };
   return {
     title: `${post.title.zh} · 蒋文喆`,
-    description: article.description.zh,
+    description: description.zh,
   };
 }
 
@@ -30,11 +37,31 @@ export default function BlogArticlePage({
   params: { slug: string };
 }) {
   const post = getPost(params.slug);
-  const article = getArticle(params.slug);
-  if (!post || !article) return <BlogArticleMissing />;
-  return (
-    <main className="relative z-10 min-h-screen">
-      <BlogArticleView post={post} article={article} />
-    </main>
-  );
+  const blockArticle = getArticle(params.slug);
+  if (post && blockArticle) {
+    return (
+      <main className="relative z-10 min-h-screen">
+        <BlogArticleView post={post} article={blockArticle} />
+      </main>
+    );
+  }
+
+  const markdownMeta = getMarkdownArticle(params.slug);
+  if (post && markdownMeta) {
+    return (
+      <main className="relative z-10 min-h-screen">
+        <BlogArticleView
+          post={post}
+          article={{
+            id: markdownMeta.id,
+            description: markdownMeta.description,
+            blocks: [],
+            markdown: loadMarkdownArticle(markdownMeta.id),
+          }}
+        />
+      </main>
+    );
+  }
+
+  return <BlogArticleMissing />;
 }

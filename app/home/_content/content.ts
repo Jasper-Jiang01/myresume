@@ -63,7 +63,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
     aboutMe: {
       title: "关于我",
       paragraphs: [
-        "我目前在美团大众点评境外事业部担任设计工程师(Product Design Engineer)；独立完成需求挖掘，设计，开发到上线的全流程。",
+        "我目前在美团大众点评用户体验部担任设计工程师(Product Design Engineer)；独立完成需求挖掘，设计，开发到上线的全流程。",
         "我相信技术能够赋能设计，设计又能够基于技术实现创新；因此我时时刻刻保持对技术能力的学习以及设计能力边界的探索。",
       ],
       passionLabel: "我一直热爱着：",
@@ -130,7 +130,7 @@ export const home: { zh: HomeCopy; en: HomeCopy } = {
     skills: {
       title: "技能",
       rows: [
-        ["Typescript", "React", "Next.js"],
+        ["Typescript", "React", "LangGraph"],
         ["Python", "Java", "Node.js"],
         ["UI/UX设计", "动效", "3D"],
       ],

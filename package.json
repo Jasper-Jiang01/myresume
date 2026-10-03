@@ -30,6 +30,9 @@
     "p5i": "^0.6.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "three": "^0.185.1",
     "zod": "^4.5.4"
   },

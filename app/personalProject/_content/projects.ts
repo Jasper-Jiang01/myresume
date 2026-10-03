@@ -24,9 +24,8 @@ export const pageCopy = {
   prevLabel: { zh: "上一个项目", en: "Previous project" },
   nextLabel: { zh: "下一个项目", en: "Next project" },
   webPortfolio: { zh: "网页版作品集", en: "Web portfolio" },
-  downloadPdf: { zh: "下载 PDF", en: "Download PDF" },
-  getWechat: { zh: "get微信", en: "Get WeChat" },
-  getEmail: { zh: "get邮箱", en: "Get email" },
+  getWechat: { zh: "获取微信", en: "Get WeChat" },
+  getEmail: { zh: "获取邮箱", en: "Get email" },
   copied: { zh: "已复制", en: "Copied" },
 };
 

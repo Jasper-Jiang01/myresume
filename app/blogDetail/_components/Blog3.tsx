@@ -14,7 +14,7 @@ import {
   posts,
   type BlogCategoryId,
 } from "../_content/posts";
-import { getArticle } from "../_content/articles";
+import { hasArticle } from "../_content/articles";
 
 /** 同一 SPA 会话内只播一次标题进场。从首页返回时若重放 opacity:0，会感觉卡住再淡入。 */
 let blogHasEntered = false;
@@ -126,7 +126,7 @@ export function Blog3() {
                 const categoryLabel = categories.find(
                   (category) => category.id === article.category
                 )?.label;
-                const href = getArticle(article.id)
+                const href = hasArticle(article.id)
                   ? postPath(article.id)
                   : undefined;
                 const cardClass =
